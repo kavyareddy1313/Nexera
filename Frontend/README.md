@@ -31,4 +31,4 @@ export default defineConfig([
       tseslint.configs.stylisticTypeChecked,
 
       // Other configs...
-  }hello github action is allowed or not irtbbgtuhtuitrhjt
+  }hello github action is allowed or not irtbbgtuhtuitrhjtytftydfssweawaerfgghgh
