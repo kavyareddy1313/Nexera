@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    image: kavya00/nexera-backend:latest
+    container_name: nexera-backend
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./Backend/.env
+    environment:
+      - PORT=4000
+    restart: unless-stopped
+    networks:
+      - nexera-network
+
+  frontend:
+    image: kavya00/nexera-frontend:latest
+    container_name: nexera-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - nexera-network
+
+networks:
+  nexera-network:
+    driver: bridge

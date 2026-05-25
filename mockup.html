@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Nexera Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
+body{background:#1a1d21;display:flex;height:100vh;overflow:hidden}
+/* Layout */
+.app{display:flex;width:100%;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:#1a1d21;display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid #2c2f33}
+.main{flex:1;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+/* Sidebar top */
+.ws-header{padding:14px 16px;border-bottom:1px solid #2c2f33;display:flex;align-items:center;justify-content:space-between}
+.ws-name{color:#fff;font-weight:800;font-size:.95rem}
+.ws-icon{width:28px;height:28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0}
+.search-bar{padding:8px 12px;background:#2c2f33;margin:10px 12px;border-radius:6px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.search-bar span{color:#8e9297;font-size:.8rem}
+/* Sidebar sections */
+.section-label{padding:8px 16px 4px;color:#8e9297;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between}
+.section-label button{background:none;border:none;color:#8e9297;font-size:18px;cursor:pointer;line-height:1}
+.ch-item{display:flex;align-items:center;gap:8px;padding:6px 16px;cursor:pointer;border-radius:4px;margin:0 4px;transition:.15s;position:relative}
+.ch-item:hover,.ch-item.active{background:#404449}
+.ch-item.active{background:#1164a3}
+.ch-hash{color:#8e9297;font-size:1rem;flex-shrink:0}
+.ch-item.active .ch-hash{color:#fff}
+.ch-name{color:#c9cdd3;font-size:.88rem;font-weight:500;flex:1}
+.ch-item.active .ch-name{color:#fff;font-weight:600}
+.badge{background:#cd2553;color:#fff;border-radius:8px;font-size:.65rem;font-weight:700;padding:1px 6px;min-width:18px;text-align:center}
+/* DM items */
+.dm-item{display:flex;align-items:center;gap:8px;padding:5px 16px;cursor:pointer;border-radius:4px;margin:0 4px;transition:.15s}
+.dm-item:hover,.dm-item.active{background:#404449}
+.dm-avatar{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.6rem;font-weight:700;flex-shrink:0;position:relative}
+.dm-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;border:2px solid #1a1d21}
+.dm-dot.on{background:#2ecc71}
+.dm-dot.off{background:#747f8d}
+.dm-name{color:#c9cdd3;font-size:.85rem;font-weight:500;flex:1}
+/* Bottom */
+.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid #2c2f33;display:flex;align-items:center;gap:8px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem}
+.user-info .u-name{color:#fff;font-size:.82rem;font-weight:600}
+.user-info .u-status{color:#8e9297;font-size:.7rem}
+/* Main header */
+.chat-header{padding:12px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#fff}
+.ch-title{display:flex;align-items:center;gap:8px}
+.ch-title h2{font-size:1rem;font-weight:700;color:#1d1c1d}
+.ch-title .sub{color:#616061;font-size:.78rem;margin-top:1px}
+.header-actions{display:flex;gap:6px}
+.h-btn{padding:6px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:.78rem;font-weight:600;cursor:pointer;color:#444;transition:.15s;display:flex;align-items:center;gap:5px}
+.h-btn:hover{background:#f8f8f8}
+.h-btn.primary{background:#6366f1;color:#fff;border-color:#6366f1}
+.h-btn.primary:hover{background:#5558e8}
+/* Messages */
+.messages{flex:1;overflow-y:auto;padding:20px 24px}
+.date-divider{text-align:center;position:relative;margin:16px 0}
+.date-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:#e2e8f0}
+.date-divider span{position:relative;background:#fff;padding:0 12px;font-size:.72rem;color:#616061;font-weight:600}
+.msg-group{display:flex;gap:12px;margin-bottom:16px;padding:4px 8px;border-radius:6px;transition:.15s}
+.msg-group:hover{background:#f8f8f8}
+.msg-avatar{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.msg-content .msg-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.msg-content .sender{font-weight:700;color:#1d1c1d;font-size:.9rem;cursor:pointer}
+.msg-content .sender:hover{text-decoration:underline}
+.msg-content .time{color:#616061;font-size:.72rem}
+.msg-content p{color:#1d1c1d;font-size:.9rem;line-height:1.5}
+.msg-content p .mention{color:#1264a3;font-weight:600;cursor:pointer}
+.reactions{display:flex;gap:6px;margin-top:6px}
+.reaction{background:#f0f0f0;border:1px solid #ddd;border-radius:10px;padding:2px 8px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:3px;transition:.15s}
+.reaction:hover{background:#e8e8e8}
+/* Typing */
+.typing-bar{padding:4px 24px 8px;font-size:.78rem;color:#616061;display:flex;align-items:center;gap:6px}
+.typing-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:#616061;margin-right:2px;animation:bounce .9s infinite}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+/* Input */
+.input-area{padding:12px 20px 16px;border-top:1px solid #e2e8f0}
+.input-box{border:1px solid #ccc;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;transition:.2s}
+.input-box:focus-within{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+.input-box input{flex:1;border:none;outline:none;font-size:.9rem;color:#1d1c1d}
+.input-box input::placeholder{color:#999}
+.input-send{background:#6366f1;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:.8rem;font-weight:600;cursor:pointer;transition:.15s}
+.input-send:hover{background:#5558e8}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;padding-top:80px;z-index:100}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;width:480px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.3);animation:su .2s ease}
+@keyframes su{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+.modal-search-wrap{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #eee}
+.modal-search-wrap input{flex:1;border:none;outline:none;font-size:.95rem;color:#1d1c1d}
+.modal-results{max-height:340px;overflow-y:auto}
+.r-item{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer;transition:.15s}
+.r-item:hover{background:#f8f8f8}
+.r-item .ri-av{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem}
+.r-item .ri-name{font-size:.9rem;font-weight:600;color:#1d1c1d}
+.r-item .ri-user{font-size:.75rem;color:#888}
+.hint{text-align:center;padding:24px;color:#888;font-size:.85rem}
+/* Dashboard */
+.dashboard{flex:1;display:flex;flex-direction:column;background:#f8fafc;overflow:auto}
+.dash-nav{padding:14px 24px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
+.dash-nav h1{font-size:1rem;font-weight:800;color:#0f172a}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:28px;padding-bottom:0}
+.stat{background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0}
+.stat-v{font-size:1.8rem;font-weight:800;color:#6366f1}
+.stat-l{font-size:.78rem;color:#64748b;font-weight:600;margin-top:4px}
+.feed{margin:24px 28px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}
+.feed-h{padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#0f172a;font-size:.9rem}
+.feed-item{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f8fafc}
+.feed-av{width:36px;height:36px;border-radius:50%}
+.feed-info .fi-name{font-size:.85rem;font-weight:600;color:#0f172a}
+.feed-info .fi-time{font-size:.72rem;color:#94a3b8}
+.ob{padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;margin-left:auto}
+.ob.on{background:#dcfce7;color:#16a34a}
+.ob.off{background:#f1f5f9;color:#94a3b8}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:#1d1c1d;color:#fff;padding:10px 20px;border-radius:8px;font-size:.82rem;font-weight:600;opacity:0;transition:.3s;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="ws-header">
+      <div class="ws-name">Workspace</div>
+      <div class="ws-icon">N</div>
+    </div>
+    <div class="search-bar" onclick="openModal()">
+      <span>🔍</span><span>Search users, channels...</span>
+    </div>
+    <div class="section-label">Channels <button onclick="openModal()">+</button></div>
+    <div class="ch-item active" onclick="selectChannel(this,'#design-team','12 members · UI/UX discussions')">
+      <span class="ch-hash">#</span><span class="ch-name">design-team</span><span class="badge">2</span>
+    </div>
+    <div class="ch-item" onclick="selectChannel(this,'#frontend','8 members · React & CSS')">
+      <span class="ch-hash">#</span><span class="ch-name">frontend</span>
+    </div>
+    <div class="ch-item" onclick="selectChannel(this,'#backend','6 members · Node & APIs')">
+      <span class="ch-hash">#</span><span class="ch-name">backend</span><span class="badge">1</span>
+    </div>
+    <div class="ch-item" onclick="selectChannel(this,'#general','All members')">
+      <span class="ch-hash">#</span><span class="ch-name">general</span>
+    </div>
+    <div class="section-label" style="margin-top:12px">Direct Messages <button onclick="openModal()">+</button></div>
+    <div class="dm-item" onclick="selectDM(this,'Priya Rajan','PR','ec4899',true)">
+      <div class="dm-avatar" style="background:#ec4899">PR<span class="dm-dot on"></span></div>
+      <span class="dm-name">Priya Rajan</span>
+    </div>
+    <div class="dm-item" onclick="selectDM(this,'Arjun Kumar','AK','f59e0b',true)">
+      <div class="dm-avatar" style="background:#f59e0b">AK<span class="dm-dot on"></span></div>
+      <span class="dm-name">Arjun Kumar</span>
+    </div>
+    <div class="dm-item" onclick="selectDM(this,'Sara Mills','SM','10b981',false)">
+      <div class="dm-avatar" style="background:#10b981">SM<span class="dm-dot off"></span></div>
+      <span class="dm-name">Sara Mills</span>
+    </div>
+    <div class="dm-item" onclick="selectDM(this,'Rahul Verma','RV','8b5cf6',false)">
+      <div class="dm-avatar" style="background:#8b5cf6">RV<span class="dm-dot off"></span></div>
+      <span class="dm-name">Rahul Verma</span>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-avatar">YO</div>
+      <div class="user-info"><div class="u-name">You</div><div class="u-status">● Active</div></div>
+    </div>
+  </div>
+
+  <!-- CHAT MAIN -->
+  <div class="main" id="chat-main">
+    <div class="chat-header">
+      <div class="ch-title">
+        <div>
+          <h2 id="chat-title"># design-team</h2>
+          <div class="sub" id="chat-sub">12 members · UI/UX discussions</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="h-btn" onclick="openModal()">🔍 Search Users</button>
+        <button class="h-btn primary" onclick="showDash()">⊞ Dashboard</button>
+      </div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="date-divider"><span>Today</span></div>
+      <div class="msg-group">
+        <div class="msg-avatar" style="background:#ec4899">PR</div>
+        <div class="msg-content">
+          <div class="msg-meta"><span class="sender">Priya Rajan</span><span class="time">9:14 AM</span></div>
+          <p>Hey team, Figma file is ready for review. <span class="mention">@design-team</span> please check the new onboarding flow!</p>
+          <div class="reactions"><span class="reaction">🔥 5</span><span class="reaction">🔥 3</span></div>
+        </div>
+      </div>
+      <div class="msg-group">
+        <div class="msg-avatar" style="background:#ec4899">PR</div>
+        <div class="msg-content">
+          <div class="msg-meta"><span class="time">9:16 AM</span></div>
+          <p>Also updated the component tokens — spacing is now aligned with Tailwind config.</p>
+        </div>
+      </div>
+      <div class="msg-group">
+        <div class="msg-avatar" style="background:#f59e0b">AK</div>
+        <div class="msg-content">
+          <div class="msg-meta"><span class="sender">Arjun Kumar</span><span class="time">9:31 AM</span></div>
+          <p>Looks great <span class="mention">@Priya</span>. Left comments on slide 7 — the empty state contrast needs work for accessibility.</p>
+          <div class="reactions"><span class="reaction">👍 2</span></div>
+        </div>
+      </div>
+      <div class="msg-group">
+        <div class="msg-avatar" style="background:#10b981">SM</div>
+        <div class="msg-content">
+          <div class="msg-meta"><span class="sender">Sara Mills</span><span class="time">10:02 AM</span></div>
+          <p>Icon set v2.3 is exported and optimized via SVGO. Ready to drop into the component library!</p>
+          <div class="reactions"><span class="reaction">🚀 4</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="typing-bar">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <span><strong>Priya</strong> is typing...</span>
+    </div>
+    <div class="input-area">
+      <div class="input-box">
+        <input type="text" id="msg-input" placeholder="Message #design-team · Enter to send" onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="input-send" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dash-main" style="display:none">
+    <div class="dash-nav">
+      <h1>⊞ Dashboard — Nexera</h1>
+      <button class="h-btn primary" onclick="showChat()">💬 Back to Chat</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-v">12</div><div class="stat-l">Active Projects</div></div>
+      <div class="stat"><div class="stat-v">48</div><div class="stat-l">Total Meetings</div></div>
+      <div class="stat"><div class="stat-v">1,284</div><div class="stat-l">Chat Messages</div></div>
+      <div class="stat"><div class="stat-v">7</div><div class="stat-l">Whiteboards</div></div>
+    </div>
+    <div class="feed">
+      <div class="feed-h"><span>Workspace Activity</span><button class="h-btn" onclick="showChat()">Open Chat →</button></div>
+      <div class="feed-item">
+        <img class="feed-av" src="https://ui-avatars.com/api/?name=Ethan+W&background=6366f1&color=fff"/>
+        <div class="feed-info"><div class="fi-name">Ethan Winters joined the workspace</div><div class="fi-time">2 mins ago</div></div>
+        <span class="ob on">Online</span>
+      </div>
+      <div class="feed-item">
+        <img class="feed-av" src="https://ui-avatars.com/api/?name=Sarah+C&background=ec4899&color=fff"/>
+        <div class="feed-info"><div class="fi-name">Sarah Connor started a new meeting</div><div class="fi-time">15 mins ago</div></div>
+        <span class="ob on">Online</span>
+      </div>
+      <div class="feed-item">
+        <img class="feed-av" src="https://ui-avatars.com/api/?name=Marcus+A&background=10b981&color=fff"/>
+        <div class="feed-info"><div class="fi-name">Marcus Aurelius updated Strategy Board</div><div class="fi-time">1 hour ago</div></div>
+        <span class="ob off">Away</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-search-wrap">
+      <span style="color:#999;font-size:18px">🔍</span>
+      <input id="usearch" type="text" placeholder="Search users by name or @username..." oninput="filterUsers(this.value)" autofocus/>
+      <button onclick="closeModal()" style="border:none;background:none;font-size:18px;color:#999;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-results" id="mresults">
+      <div class="hint">Start typing to find people in your workspace</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const users=[
+  {name:'Priya Rajan',initials:'PR',bg:'ec4899',username:'priya'},
+  {name:'Arjun Kumar',initials:'AK',bg:'f59e0b',username:'arjun'},
+  {name:'Sara Mills',initials:'SM',bg:'10b981',username:'sara'},
+  {name:'Rahul Verma',initials:'RV',bg:'8b5cf6',username:'rahul'},
+  {name:'Ethan Winters',initials:'EW',bg:'6366f1',username:'ethan'},
+  {name:'Alex Thompson',initials:'AT',bg:'06b6d4',username:'alex'},
+];
+
+function showDash(){
+  document.getElementById('chat-main').style.display='none';
+  document.getElementById('dash-main').style.display='flex';
+  toast('Navigated to Dashboard ⊞');
+}
+function showChat(){
+  document.getElementById('dash-main').style.display='none';
+  document.getElementById('chat-main').style.display='flex';
+  toast('Back to Chat 💬');
+}
+function selectChannel(el,name,sub){
+  document.querySelectorAll('.ch-item,.dm-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('chat-title').textContent=name;
+  document.getElementById('chat-sub').textContent=sub;
+  document.getElementById('msg-input').placeholder='Message '+name+' · Enter to send';
+  const b=el.querySelector('.badge');if(b)b.remove();
+}
+function selectDM(el,name,initials,bg,online){
+  document.querySelectorAll('.ch-item,.dm-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('chat-title').textContent=name;
+  document.getElementById('chat-sub').textContent=online?'● Active':'○ Offline';
+  document.getElementById('msg-input').placeholder='Message '+name+' · Enter to send';
+}
+function openModal(){
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('usearch').value='';
+  document.getElementById('mresults').innerHTML='<div class="hint">Start typing to find people in your workspace</div>';
+  setTimeout(()=>document.getElementById('usearch').focus(),80);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+function filterUsers(q){
+  const el=document.getElementById('mresults');
+  if(!q.trim()){el.innerHTML='<div class="hint">Start typing to find people in your workspace</div>';return;}
+  const found=users.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||u.username.includes(q.toLowerCase()));
+  if(!found.length){el.innerHTML='<div class="hint">No users found for "'+q+'"</div>';return;}
+  el.innerHTML=found.map(u=>`<div class="r-item" onclick="startDM('${u.name}','${u.initials}','${u.bg}')">
+    <div class="ri-av" style="background:#${u.bg}">${u.initials}</div>
+    <div><div class="ri-name">${u.name}</div><div class="ri-user">@${u.username}</div></div>
+  </div>`).join('');
+}
+function startDM(name,initials,bg){
+  closeModal();showChat();
+  document.getElementById('chat-title').textContent=name;
+  document.getElementById('chat-sub').textContent='● Active';
+  document.getElementById('msg-input').placeholder='Message '+name+' · Enter to send';
+  toast('Opened DM with '+name+' ✉️');
+}
+function sendMsg(){
+  const inp=document.getElementById('msg-input');
+  const v=inp.value.trim();if(!v)return;
+  const el=document.getElementById('messages');
+  const t=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  el.innerHTML+=`<div class="msg-group"><div class="msg-avatar" style="background:#6366f1">YO</div>
+    <div class="msg-content"><div class="msg-meta"><span class="sender">You</span><span class="time">${t}</span></div>
+    <p>${v}</p></div></div>`;
+  inp.value='';el.scrollTop=el.scrollHeight;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>

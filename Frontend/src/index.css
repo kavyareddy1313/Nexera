@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5840D8;
+  --color-primary-hover: #4830c0;
+  --color-text-primary: #1F2937;
+  --color-text-secondary: #6B7280;
+  --color-bg-light: #F9FAFB;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
