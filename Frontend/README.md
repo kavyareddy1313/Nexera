@@ -1,34 +1,74 @@
-# React + TypeScript + Vite
+# Nexera - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Nexera is a modern web application built with React and Vite. This repository contains the frontend client, which connects to the Nexera backend services.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: [React](https://react.dev/) 19
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Routing**: [React Router](https://reactrouter.com/)
+- **Real-time Communication**: [Socket.io Client](https://socket.io/)
+- **Data Fetching**: [React Query](https://tanstack.com/query/latest) & [Axios](https://axios-http.com/)
+- **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Backend Services**: [Supabase](https://supabase.com/)
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+Ensure you have Node.js and npm installed on your machine.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Navigate to the frontend directory:
+   ```bash
+   cd Frontend
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-      // Other configs...
-  }hello github action is allowed or not irtbbgtuhtuitrhjtytftydfssweawaerfgghgh
+3. Set up environment variables:
+   Ensure you configure the `.env` file with the required environment variables (e.g., API endpoints, Supabase keys) before starting the server.
+
+### Running the Development Server
+
+Start the Vite development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173` (or the port specified by Vite).
+
+### Building for Production
+
+To create a production build:
+```bash
+npm run build
+```
+
+To preview the production build locally:
+```bash
+npm run preview
+```
+
+## Docker
+
+The frontend application is containerized and can be run using Docker. A `docker-compose.yml` file is available in the root directory to spin up both the frontend and backend services together.
+
+```bash
+cd ..
+docker-compose up -d
+```
+
+## Project Structure Highlights
+
+- `src/`: Contains all the application source code (components, pages, stores, utils, etc.).
+- `public/`: Static assets.
+- `vite.config.js`: Configuration for the Vite bundler.
+- `package.json`: Project dependencies and NPM scripts.
