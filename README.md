@@ -143,3 +143,4 @@ If you prefer running services locally for development:
 ## Conclusion
 
 Nexera is built to showcase the power of modern web technologies in creating a cohesive, low-latency, and feature-rich platform. By combining the social and instant aspects of chat applications with the structured knowledge delivery of an LMS, it provides a unique environment where learning and collaboration happen simultaneously.
+it is a devops project
