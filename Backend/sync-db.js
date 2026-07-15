@@ -1,14 +1,16 @@
 import { sequelize } from './src/config/db.js';
-import * as models from './src/models/index.js';
+import User from './src/models/User.js';
 
-(async () => {
+async function sync() {
   try {
-    await models.Course.sync({ force: true });
-    await models.CourseEnrollment.sync({ force: true });
-    console.log("Course DB Synced!");
-  } catch (err) {
-    console.error(err);
+    await sequelize.authenticate();
+    console.log('Connection OK');
+    await sequelize.sync({ alter: true });
+    console.log('Schema synced successfully!');
+  } catch (error) {
+    console.error('Error syncing:', error);
   } finally {
-    process.exit();
+    await sequelize.close();
   }
-})();
+}
+sync();
