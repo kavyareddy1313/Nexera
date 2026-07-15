@@ -195,53 +195,38 @@ export function DashboardWorkspace() {
             </div>
           </div>
 
-          {/* Enrolled Courses */}
+          {/* Recent Whiteboards */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <BookOpen size={20} className="text-indigo-600" /> My Courses
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Recent Whiteboards
             </h2>
             
-            {enrolledCourses.length === 0 ? (
-              <div 
-                onClick={() => navigate('/courses')}
-                className="bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-indigo-50 transition-colors"
-              >
-                <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <BookOpen size={24} />
-                </div>
-                <h3 className="text-sm font-bold text-gray-900 mb-1">No courses yet</h3>
-                <p className="text-xs text-gray-500 font-medium">Click here to explore the catalog and start learning.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {enrolledCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    onClick={() => navigate(`/courses/${course.id}`)}
-                    className="bg-white rounded-2xl p-4 flex gap-4 shadow-sm border border-gray-100 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all group"
-                  >
-                    <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
-                      <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <PlayCircle size={24} className="text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h3 className="text-sm font-bold text-gray-900 leading-tight mb-1 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                        {course.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 font-medium">
-                        Instructor: {course.instructor?.fullName || 'Nexera'}
-                      </p>
-                      <div className="mt-2 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 w-[15%]"></div>
-                      </div>
-                      <p className="text-[10px] text-gray-400 font-bold mt-1 text-right">15% Complete</p>
-                    </div>
+            <div className="grid grid-cols-2 gap-4">
+              {whiteboards.map((board) => (
+                <div
+                  key={board.id}
+                  onClick={() => toast(`Opening ${board.title}...`, { icon: '✏️' })}
+                  className={`${board.bgClass} rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all h-32 relative group`}
+                >
+                  <div className={`w-8 h-8 rounded-lg ${board.iconBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                    {board.icon}
                   </div>
-                ))}
+                  <h3 className="text-xs font-bold text-gray-900 leading-tight">
+                    {board.title}
+                  </h3>
+                </div>
+              ))}
+              
+              {/* Add New Whiteboard Button */}
+              <div
+                onClick={() => toast('Creating new whiteboard...', { icon: '✨' })}
+                className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all h-32 group"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3">
+                  <Plus size={20} className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
