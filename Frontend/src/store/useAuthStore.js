@@ -11,10 +11,9 @@ const useAuthStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user } = response.data.data;
+      const { accessToken, user } = response.data.data;
 
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
 
       set({ user, isAuthenticated: true, loading: false });
@@ -28,10 +27,10 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  register: async (fullName, username, email, password) => {
+  register: async (fullName, username, email, password, role) => {
     set({ loading: true, error: null });
     try {
-      await api.post('/auth/register', { fullName, username, email, password });
+      await api.post('/auth/register', { fullName, username, email, password, role });
       set({ loading: false });
       return true;
     } catch (error) {
@@ -71,9 +70,38 @@ const useAuthStore = create((set) => ({
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       set({ user: null, isAuthenticated: false });
+    }
+  },
+
+  forgotPassword: async (email) => {
+    set({ loading: true, error: null });
+    try {
+      await api.post('/auth/forgot-password', { email });
+      set({ loading: false });
+      return true;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || error.response?.data?.error?.message || 'Failed to send reset link', 
+        loading: false 
+      });
+      return false;
+    }
+  },
+
+  resetPassword: async (token, newPassword) => {
+    set({ loading: true, error: null });
+    try {
+      await api.post('/auth/reset-password', { token, newPassword });
+      set({ loading: false });
+      return true;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || error.response?.data?.error?.message || 'Failed to reset password', 
+        loading: false 
+      });
+      return false;
     }
   },
 
