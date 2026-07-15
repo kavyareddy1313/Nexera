@@ -29,9 +29,8 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
-          refreshToken,
+        const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, {
+          withCredentials: true
         });
 
         const { accessToken } = response.data.data;
@@ -42,7 +41,6 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh token failed, logout user
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
