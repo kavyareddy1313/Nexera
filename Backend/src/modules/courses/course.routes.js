@@ -3,7 +3,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { Course, User, CourseEnrollment, Conversation, ConversationMember } from '../../models/index.js';
-import { authMiddleware as requireAuth } from '../../middleware/auth.middleware.js';
+import { authMiddleware as requireAuth, requireRole } from '../../middleware/auth.middleware.js';
 import { razorpay } from '../../config/razorpay.js';
 import crypto from 'crypto';
 import { env } from '../../config/env.js';
@@ -227,6 +227,47 @@ router.post('/seed', asyncHandler(async (req, res) => {
 
   await Course.bulkCreate(mockCourses);
   res.json(ApiResponse.ok({ message: 'Seeded successfully' }));
+}));
+
+// POST /api/courses
+// Create course (Instructor only)
+router.post('/', requireAuth, requireRole(['instructor']), asyncHandler(async (req, res) => {
+  const { title, description, price, thumbnailUrl, category, duration } = req.body;
+
+  if (!title || !description) {
+    throw ApiError.badRequest('Title and description are required');
+  }
+
+  // Create course record
+  const course = await Course.create({
+    title,
+    description,
+    price: price || 0.00,
+    thumbnailUrl,
+    category,
+    duration,
+    instructor_id: req.user.id
+  });
+
+  // Automatically create a group conversation (community) for this course
+  const conversation = await Conversation.create({
+    type: 'group',
+    name: `${course.title} Community`,
+    is_channel: false,
+    created_by: req.user.id
+  });
+
+  // Automatically enroll/register the instructor as the group admin
+  await ConversationMember.create({
+    conversation_id: conversation.id,
+    user_id: req.user.id,
+    role: 'admin'
+  });
+
+  res.status(201).json(ApiResponse.created({
+    course,
+    conversationId: conversation.id
+  }, 'Course created and community group conversation initialized successfully'));
 }));
 
 export default router;
