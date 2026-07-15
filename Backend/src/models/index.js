@@ -8,6 +8,8 @@ import Status from './Status.js';
 import StatusView from './StatusView.js';
 import Course from './Course.js';
 import CourseEnrollment from './CourseEnrollment.js';
+import RefreshToken from './RefreshToken.js';
+import PasswordResetToken from './PasswordResetToken.js';
 
 // --- Associations ---
 
@@ -70,6 +72,13 @@ Course.belongsToMany(User, { through: CourseEnrollment, foreignKey: 'course_id',
 CourseEnrollment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 CourseEnrollment.belongsTo(Course, { foreignKey: 'course_id', as: 'course' });
 
+// Auth Tokens
+User.hasMany(RefreshToken, { foreignKey: 'user_id' });
+RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+User.hasMany(PasswordResetToken, { foreignKey: 'user_id' });
+PasswordResetToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
 export {
   User,
   Conversation,
@@ -80,5 +89,7 @@ export {
   Status,
   StatusView,
   Course,
-  CourseEnrollment
+  CourseEnrollment,
+  RefreshToken,
+  PasswordResetToken
 };
