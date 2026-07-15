@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 
 import { env } from './config/env.js';
@@ -20,6 +21,7 @@ import meetingsRoutes from './modules/meetings/meetings.routes.js';
 import whiteboardRoutes from './modules/whiteboard/whiteboard.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
 import courseRoutes from './modules/courses/course.routes.js';
+import protectedSampleRoutes from './routes/protected-samples.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -28,6 +30,7 @@ app.use(helmet());
 app.use(cors(corsConfig));
 app.use(compression());
 app.use(express.json());
+app.use(cookieParser());
 app.use(requestLogger);
 app.use(globalRateLimit);
 
@@ -39,6 +42,7 @@ app.use('/api/v1/meetings', meetingsRoutes);
 app.use('/api/v1/whiteboard', whiteboardRoutes);
 app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/protected', protectedSampleRoutes);
 
 app.use((req, res, next) => next(ApiError.notFound(`Route not found`)));
 app.use(errorHandler);
