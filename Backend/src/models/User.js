@@ -39,16 +39,29 @@ const User = sequelize.define('User', {
     defaultValue: false,
     field: 'is_online'
   },
+  emailVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'email_verified'
+  },
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'student',
+    validate: {
+      isIn: [['student', 'instructor', 'admin']]
+    }
+  },
 }, {
   hooks: {
     beforeCreate: async (user) => {
       if (user.password) {
-        user.password = await bcrypt.hash(user.password, 10);
+        user.password = await bcrypt.hash(user.password, 12);
       }
     },
     beforeUpdate: async (user) => {
       if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 10);
+        user.password = await bcrypt.hash(user.password, 12);
       }
     },
   },
