@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Video, PenTool, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
+import { useAuth } from '../context/AuthContext';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  fullName: z.string().min(2, 'Full name is required'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-z0-9_]+$/, 'Username must be lowercase letters, numbers, or underscores'),
+  role: z.enum(['student', 'instructor', 'admin']),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,9 +27,12 @@ export default function AuthPage() {
     password: '',
     fullName: '',
     username: '',
+    role: 'student',
   });
+  const [validationErrors, setValidationErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const { login, register, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const { login, register, isLoading, error, clearError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,21 +44,57 @@ export default function AuthPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationErrors({});
+    setSuccessMessage('');
+    clearError();
+
     if (isLogin) {
+      const parsed = loginSchema.safeParse({ email: formData.email, password: formData.password });
+      if (!parsed.success) {
+        const errors = {};
+        parsed.error.issues.forEach(issue => {
+          errors[issue.path[0]] = issue.message;
+        });
+        setValidationErrors(errors);
+        return;
+      }
+
       const success = await login(formData.email, formData.password);
       if (success) navigate('/dashboard');
     } else {
-      const success = await register(formData.fullName, formData.username, formData.email, formData.password);
+      const parsed = registerSchema.safeParse(formData);
+      if (!parsed.success) {
+        const errors = {};
+        parsed.error.issues.forEach(issue => {
+          errors[issue.path[0]] = issue.message;
+        });
+        setValidationErrors(errors);
+        return;
+      }
+
+      const success = await register(
+        formData.fullName, 
+        formData.username, 
+        formData.email, 
+        formData.password, 
+        formData.role
+      );
+      
       if (success) {
+        setSuccessMessage('Account created successfully! Please login.');
         setIsLogin(true);
-        alert('Account created! Please login.');
+        setFormData(prev => ({ ...prev, password: '' })); // Clear password
       }
     }
   };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (validationErrors[e.target.name]) {
+      setValidationErrors({ ...validationErrors, [e.target.name]: null });
+    }
     if (error) clearError();
+    if (successMessage) setSuccessMessage('');
   };
 
   const handleQuickLogin = async (index) => {
@@ -47,16 +102,15 @@ export default function AuthPage() {
     const password = 'password123';
     const username = `testuser${index}`;
     const fullName = `Test User ${index}`;
+    const role = index % 3 === 0 ? 'admin' : (index % 2 === 0 ? 'instructor' : 'student');
 
-    // Try to login first
     const loginSuccess = await login(email, password);
     if (loginSuccess) {
       navigate('/dashboard');
       return;
     }
 
-    // If login fails (likely because user doesn't exist), register then login
-    const regSuccess = await register(fullName, username, email, password);
+    const regSuccess = await register(fullName, username, email, password, role);
     if (regSuccess) {
       const success = await login(email, password);
       if (success) navigate('/dashboard');
@@ -138,13 +192,13 @@ export default function AuthPage() {
         <div className="w-full max-w-md">
           <div className="flex mx-auto w-fit bg-gray-100 p-1 rounded-full mb-12 shadow-sm border border-gray-200/50">
             <button 
-              onClick={() => setIsLogin(true)}
+              onClick={() => { setIsLogin(true); clearError(); setValidationErrors({}); setSuccessMessage(''); }}
               className={`px-8 py-2.5 rounded-full transition-all text-sm font-bold ${isLogin ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Login
             </button>
             <button 
-              onClick={() => setIsLogin(false)}
+              onClick={() => { setIsLogin(false); clearError(); setValidationErrors({}); }}
               className={`px-8 py-2.5 rounded-full transition-all text-sm font-bold ${!isLogin ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Register
@@ -163,6 +217,13 @@ export default function AuthPage() {
             </div>
           )}
 
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-100 text-green-700 text-sm font-semibold rounded-xl flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              {successMessage}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             {!isLogin && (
               <>
@@ -174,9 +235,9 @@ export default function AuthPage() {
                     placeholder="John Doe" 
                     value={formData.fullName}
                     onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm" 
+                    className={`w-full px-4 py-3.5 rounded-xl border ${validationErrors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'} focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm`}
                   />
+                  {validationErrors.fullName && <p className="text-xs text-red-500 mt-1.5 font-medium">{validationErrors.fullName}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2.5">USERNAME</label>
@@ -188,13 +249,26 @@ export default function AuthPage() {
                       placeholder="johndoe" 
                       value={formData.username}
                       onChange={handleChange}
-                      required
-                      pattern="[a-z0-9_]+"
-                      title="Lowercase letters, numbers, and underscores only"
-                      className="w-full pl-8 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm" 
+                      className={`w-full pl-8 pr-4 py-3.5 rounded-xl border ${validationErrors.username ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'} focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm`}
                     />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1.5 font-medium">Lowercase letters, numbers, and underscores only</p>
+                  {validationErrors.username ? (
+                    <p className="text-xs text-red-500 mt-1.5 font-medium">{validationErrors.username}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1.5 font-medium">Lowercase letters, numbers, and underscores only</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2.5">ROLE</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm bg-white font-medium shadow-sm"
+                  >
+                    <option value="student">Student</option>
+                    <option value="instructor">Instructor</option>
+                  </select>
                 </div>
               </>
             )}
@@ -207,15 +281,15 @@ export default function AuthPage() {
                 placeholder="name@company.com" 
                 value={formData.email}
                 onChange={handleChange}
-                required
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm" 
+                className={`w-full px-4 py-3.5 rounded-xl border ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'} focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm`}
               />
+              {validationErrors.email && <p className="text-xs text-red-500 mt-1.5 font-medium">{validationErrors.email}</p>}
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2.5">
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest">PASSWORD</label>
-                {isLogin && <a href="#" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors">Forgot password?</a>}
+                {isLogin && <Link to="/forgot-password" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors">Forgot password?</Link>}
               </div>
               <div className="relative">
                 <input 
@@ -224,21 +298,21 @@ export default function AuthPage() {
                   placeholder="••••••••" 
                   value={formData.password}
                   onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm" 
+                  className={`w-full px-4 py-3.5 rounded-xl border ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'} focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:text-gray-400 text-sm bg-white font-medium shadow-sm`}
                 />
                 <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {validationErrors.password && <p className="text-xs text-red-500 mt-1.5 font-medium">{validationErrors.password}</p>}
             </div>
 
             <button 
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full py-3.5 px-4 bg-[#5A40DA] hover:bg-[#4830C0] disabled:bg-indigo-300 text-white rounded-xl font-bold text-sm text-center transition-all shadow-md shadow-indigo-500/20 mt-4 flex items-center justify-center gap-2"
             >
-              {loading && <Loader2 size={18} className="animate-spin" />}
+              {isLoading && <Loader2 size={18} className="animate-spin" />}
               {isLogin ? 'Sign in' : 'Create account'}
             </button>
           </form>
@@ -261,7 +335,7 @@ export default function AuthPage() {
                 <button
                   key={num}
                   type="button"
-                  disabled={loading}
+                  disabled={isLoading}
                   onClick={() => handleQuickLogin(num)}
                   className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                 >
