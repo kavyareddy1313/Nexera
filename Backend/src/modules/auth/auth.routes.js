@@ -4,40 +4,50 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { authRateLimit } from '../../middleware/rateLimit.js';
 import User from '../../models/User.js';
+import RefreshToken from '../../models/RefreshToken.js';
+import PasswordResetToken from '../../models/PasswordResetToken.js';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
-import { z } from 'zod';
 import { Op } from 'sequelize';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
+import crypto from 'crypto';
+import { 
+  registerSchema, 
+  loginSchema, 
+  forgotPasswordSchema, 
+  resetPasswordSchema 
+} from './auth.validators.js';
 import { Client } from 'pg';
 
 const router = Router();
 
-const signUpSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-  fullName: z.string().min(2),
-  username: z.string().min(3).regex(/^[a-z0-9_]+$/, 'Username must be lowercase letters, numbers, or underscores'),
-});
-
-const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
-
 const generateTokens = (user) => {
-  const accessToken = jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: '1d' });
-  const refreshToken = jwt.sign({ id: user.id }, env.JWT_SECRET, { expiresIn: '7d' });
-  return { accessToken, refreshToken };
+  const accessToken = jwt.sign(
+    { id: user.id, email: user.email, role: user.role }, 
+    env.JWT_SECRET, 
+    { expiresIn: '15m' }
+  );
+  
+  const refreshString = crypto.randomBytes(40).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(refreshString).digest('hex');
+
+  return { accessToken, refreshString, tokenHash };
+};
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 
 router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
-  const parsed = signUpSchema.safeParse(req.body);
+  const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     throw ApiError.badRequest('Validation failed', parsed.error.issues);
   }
 
-  const { email, password, fullName, username } = parsed.data;
+  const { email, password, fullName, username, role } = parsed.data;
 
   const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { username }] } });
   if (existingUser) {
@@ -45,7 +55,7 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
     throw ApiError.conflict('Username already taken');
   }
 
-  const user = await User.create({ email, password, fullName, username });
+  const user = await User.create({ email, password, fullName, username, role });
 
   // Sync with auth.users and public.profiles for Supabase chat compatibility
   const AVATAR_COLORS = [
@@ -53,22 +63,11 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
     { bg: '#F0FDF4', text: '#166534' },
     { bg: '#FDF4FF', text: '#7E22CE' },
     { bg: '#FFF7ED', text: '#9A3412' },
-    { bg: '#E6F1FB', text: '#0C447C' },
-    { bg: '#EAF3DE', text: '#27500A' },
-    { bg: '#FAEEDA', text: '#633806' },
-    { bg: '#FAECE7', text: '#712B13' },
-    { bg: '#EEEDFE', text: '#3C3489' },
-    { bg: '#E1F5EE', text: '#085041' },
   ];
   const colorIndex = Math.floor(Math.random() * AVATAR_COLORS.length);
   const avatarColor = AVATAR_COLORS[colorIndex];
   
-  const initials = fullName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   const client = new Client({
     connectionString: env.DATABASE_URL,
@@ -77,8 +76,6 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
 
   try {
     await client.connect();
-    
-    // Insert into auth.users to satisfy foreign key constraints
     await client.query(
       `INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
        VALUES ($1, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $2, 'dummy', NOW(), '{}', '{}', NOW(), NOW())
@@ -86,7 +83,6 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
       [user.id, email]
     );
 
-    // Upsert into public.profiles
     await client.query(
       `INSERT INTO public.profiles (id, full_name, status, initials, avatar_color_bg, avatar_color_text, created_at, updated_at)
        VALUES ($1, $2, 'online', $3, $4, $5, NOW(), NOW())
@@ -106,7 +102,7 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
 }));
 
 router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
-  const parsed = signInSchema.safeParse(req.body);
+  const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) throw ApiError.badRequest('Validation failed', parsed.error.issues);
 
   const { email, password } = parsed.data;
@@ -116,138 +112,143 @@ router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
     throw ApiError.unauthorized('Invalid credentials');
   }
 
-  const { accessToken, refreshToken } = generateTokens(user);
+  const { accessToken, refreshString, tokenHash } = generateTokens(user);
+
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await RefreshToken.create({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
+  res.cookie('refreshToken', refreshString, COOKIE_OPTIONS);
 
   res.json(ApiResponse.ok({
     accessToken,
-    refreshToken,
     user: {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
       username: user.username,
       avatarUrl: user.avatarUrl,
+      role: user.role,
     },
   }, 'Logged in successfully'));
 }));
 
 router.post('/refresh', asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
-  if (!refreshToken) throw ApiError.badRequest('refreshToken is required');
+  const refreshString = req.cookies.refreshToken;
+  if (!refreshString) throw ApiError.unauthorized('Refresh token required');
 
-  try {
-    const decoded = jwt.verify(refreshToken, env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
-    if (!user) throw new Error();
+  const tokenHash = crypto.createHash('sha256').update(refreshString).digest('hex');
 
-    const tokens = generateTokens(user);
-    res.json(ApiResponse.ok(tokens));
-  } catch (err) {
-    throw ApiError.unauthorized('Invalid refresh token');
-  }
-}));
-
-// Get all users (excluding self)
-router.get('/users', authMiddleware, asyncHandler(async (req, res) => {
-  const users = await User.findAll({
-    where: { id: { [Op.ne]: req.user.id } },
-    attributes: ['id', 'fullName', 'username', 'email', 'avatarUrl', 'isOnline'],
-  });
-  res.json(ApiResponse.ok(users));
-}));
-
-// Search users by username or fullName
-router.get('/users/search', authMiddleware, asyncHandler(async (req, res) => {
-  const { q } = req.query;
-  if (!q || q.trim().length < 1) {
-    return res.json(ApiResponse.ok([]));
-  }
-
-  const query = q.trim();
-  const users = await User.findAll({
-    where: {
-      id: { [Op.ne]: req.user.id },
-      [Op.or]: [
-        { username: { [Op.iLike]: `%${query}%` } },
-        { fullName: { [Op.iLike]: `%${query}%` } },
-      ],
-    },
-    attributes: ['id', 'fullName', 'username', 'email', 'avatarUrl', 'isOnline'],
-    limit: 20,
+  const tokenRecord = await RefreshToken.findOne({
+    where: { tokenHash, revoked: false, expiresAt: { [Op.gt]: new Date() } }
   });
 
-  res.json(ApiResponse.ok(users));
+  if (!tokenRecord) {
+    res.clearCookie('refreshToken');
+    throw ApiError.unauthorized('Invalid or expired refresh token');
+  }
+
+  const user = await User.findByPk(tokenRecord.userId);
+  if (!user) throw ApiError.unauthorized('User not found');
+
+  // Revoke old token
+  tokenRecord.revoked = true;
+  await tokenRecord.save();
+
+  // Issue new tokens
+  const newTokens = generateTokens(user);
+  
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await RefreshToken.create({
+    userId: user.id,
+    tokenHash: newTokens.tokenHash,
+    expiresAt,
+  });
+
+  res.cookie('refreshToken', newTokens.refreshString, COOKIE_OPTIONS);
+  res.json(ApiResponse.ok({ accessToken: newTokens.accessToken }));
 }));
 
-// Logout (stateless — just acknowledge)
 router.post('/logout', authMiddleware, asyncHandler(async (req, res) => {
+  const refreshString = req.cookies.refreshToken;
+  if (refreshString) {
+    const tokenHash = crypto.createHash('sha256').update(refreshString).digest('hex');
+    await RefreshToken.update({ revoked: true }, { where: { tokenHash } });
+  }
+
+  res.clearCookie('refreshToken');
   await User.update({ isOnline: false }, { where: { id: req.user.id } });
   res.json(ApiResponse.ok(null, 'Logged out successfully'));
 }));
 
-// Update user profile
-router.put('/profile', authMiddleware, asyncHandler(async (req, res) => {
-  const updateSchema = z.object({
-    fullName: z.string().min(2).optional(),
-    username: z.string().min(3).regex(/^[a-z0-9_]+$/, 'Username must be lowercase letters, numbers, or underscores').optional(),
-  });
+router.post('/forgot-password', authRateLimit, asyncHandler(async (req, res) => {
+  const parsed = forgotPasswordSchema.safeParse(req.body);
+  if (!parsed.success) throw ApiError.badRequest('Validation failed', parsed.error.issues);
 
-  const parsed = updateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw ApiError.badRequest('Validation failed', parsed.error.issues);
+  const { email } = parsed.data;
+  const user = await User.findOne({ where: { email } });
+
+  if (user) {
+    const resetString = crypto.randomBytes(40).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(resetString).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await PasswordResetToken.create({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    const resetLink = `${env.FRONTEND_URL}/reset-password?token=${resetString}`;
+    console.log(`\n\n[DEV MODE] Password Reset Link for ${email}: \n${resetLink}\n\n`);
   }
 
-  const { fullName, username } = parsed.data;
-  const user = await User.findByPk(req.user.id);
+  res.json(ApiResponse.ok(null, 'If that email is registered, a password reset link has been sent.'));
+}));
 
+router.post('/reset-password', authRateLimit, asyncHandler(async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) throw ApiError.badRequest('Validation failed', parsed.error.issues);
+
+  const { token, newPassword } = parsed.data;
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  const resetToken = await PasswordResetToken.findOne({
+    where: { tokenHash, used: false, expiresAt: { [Op.gt]: new Date() } }
+  });
+
+  if (!resetToken) {
+    throw ApiError.badRequest('Invalid or expired reset token');
+  }
+
+  const user = await User.findByPk(resetToken.userId);
   if (!user) throw ApiError.notFound('User not found');
 
-  if (username && username !== user.username) {
-    const existing = await User.findOne({ where: { username } });
-    if (existing) throw ApiError.conflict('Username already taken');
-  }
-
-  if (fullName) user.fullName = fullName;
-  if (username) user.username = username;
-
+  user.password = newPassword; // Will be hashed by Sequelize hook
   await user.save();
 
-  // Try to sync with public.profiles
-  const client = new Client({
-    connectionString: env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+  resetToken.used = true;
+  await resetToken.save();
 
-  try {
-    await client.connect();
-    
-    // Calculate new initials if fullName changed
-    let initials = user.fullName
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
+  // Invalidate all active refresh tokens for the user
+  await RefreshToken.update(
+    { revoked: true }, 
+    { where: { userId: user.id, revoked: false } }
+  );
 
-    await client.query(
-      `UPDATE public.profiles 
-       SET full_name = $1, initials = $2, updated_at = NOW()
-       WHERE id = $3`,
-      [user.fullName, initials, user.id]
-    );
-  } catch (err) {
-    console.error('Failed to sync profile update:', err.message);
-  } finally {
-    await client.end();
-  }
+  res.json(ApiResponse.ok(null, 'Password has been successfully reset.'));
+}));
 
+router.get('/me', authMiddleware, asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok({
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName,
-    username: user.username,
-    avatarUrl: user.avatarUrl,
-  }, 'Profile updated successfully'));
+    id: req.user.id,
+    email: req.user.email,
+    fullName: req.user.fullName,
+    role: req.user.role,
+  }));
 }));
 
 export default router;
