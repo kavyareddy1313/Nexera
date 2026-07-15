@@ -39,6 +39,7 @@
     "tailwind-merge": "^3.6.0",
     "tippy.js": "^6.3.7",
     "yet-another-react-lightbox": "^3.32.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
