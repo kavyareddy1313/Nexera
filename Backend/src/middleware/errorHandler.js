@@ -5,10 +5,11 @@ import { env } from '../config/env.js';
 export const errorHandler = (err, req, res, next) => {
   if (err instanceof ApiError && err.isOperational) {
     res.status(err.statusCode).json({
-      success: false,
-      statusCode: err.statusCode,
-      message: err.message,
-      errors: err.errors ?? [],
+      error: {
+        code: err.statusCode,
+        message: err.message,
+        details: err.errors ?? [],
+      }
     });
     return;
   }
@@ -22,11 +23,11 @@ export const errorHandler = (err, req, res, next) => {
   });
 
   res.status(500).json({
-    success: false,
-    statusCode: 500,
-    message: env.NODE_ENV === 'production'
-      ? 'An unexpected error occurred. Please try again later.'
-      : err.message,
-    errors: [],
+    error: {
+      code: 500,
+      message: env.NODE_ENV === 'production'
+        ? 'An unexpected error occurred. Please try again later.'
+        : err.message,
+    }
   });
 };
