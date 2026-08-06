@@ -22,6 +22,7 @@ import whiteboardRoutes from './modules/whiteboard/whiteboard.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
 import courseRoutes from './modules/courses/course.routes.js';
 import protectedSampleRoutes from './routes/protected-samples.js';
+import aiRoutes from './modules/ai/ai.routes.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -43,6 +44,7 @@ app.use('/api/v1/whiteboard', whiteboardRoutes);
 app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/protected', protectedSampleRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 app.use((req, res, next) => next(ApiError.notFound(`Route not found`)));
 app.use(errorHandler);

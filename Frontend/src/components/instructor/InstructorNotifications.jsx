@@ -68,29 +68,6 @@ export function InstructorNotifications() {
     <div className="flex flex-1 overflow-hidden bg-[#f8f9fc]">
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
-        {/* Top Header */}
-        <header className="h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
-          <div className="relative w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search courses, students..." 
-              className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 shadow-sm"
-            />
-          </div>
-          <div className="flex items-center gap-6">
-            <button className="text-gray-400 hover:text-gray-600 transition-colors relative">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </button>
-            <button className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-100 transition-colors">
-              <Radio size={16} />
-              Go Live
-            </button>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border border-gray-200">
-              <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </header>
 
         <div className="flex-1 overflow-y-auto px-10 pt-10 pb-20 custom-scrollbar">
           <div className="max-w-5xl mx-auto">

@@ -13,6 +13,7 @@ import CreateCoursePage from './pages/CreateCoursePage';
 import CourseContentManager from './pages/CourseContentManager';
 import InstructorStudentsPage from './pages/InstructorStudentsPage';
 import InstructorReviewsPage from './pages/InstructorReviewsPage';
+import InstructorMessagesPage from './pages/InstructorMessagesPage';
 import InstructorAnalyticsPage from './pages/InstructorAnalyticsPage';
 import InstructorRevenuePage from './pages/InstructorRevenuePage';
 import InstructorCertificatesPage from './pages/InstructorCertificatesPage';
@@ -24,8 +25,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import InstructorLayout from './layouts/InstructorLayout';
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
+import AiFloatingButton from './components/ai/AiFloatingButton';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -68,121 +71,28 @@ function App() {
           />
           
           <Route
-            path="/instructor/dashboard"
+            path="/instructor"
             element={
               <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorDashboard />
+                <InstructorLayout />
               </ProtectedRoute>
             }
-          />
-          
-          <Route
-            path="/instructor/courses"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorCoursesPage />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/instructor/courses/create"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <CreateCoursePage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/courses/:id/manage"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <CourseContentManager />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/students"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorStudentsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/reviews"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorReviewsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/analytics"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorAnalyticsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/revenue"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorRevenuePage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/certificates"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorCertificatesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/notifications"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorNotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/live-classes"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorLiveClassesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/instructor/calendar"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorCalendarPage />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/instructor/settings"
-            element={
-              <ProtectedRoute allowedRoles={['instructor', 'admin']}>
-                <InstructorSettingsPage />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="dashboard" element={<InstructorDashboard />} />
+            <Route path="messages" element={<InstructorMessagesPage />} />
+            <Route path="courses" element={<InstructorCoursesPage />} />
+            <Route path="courses/create" element={<CreateCoursePage />} />
+            <Route path="courses/:id/manage" element={<CourseContentManager />} />
+            <Route path="students" element={<InstructorStudentsPage />} />
+            <Route path="reviews" element={<InstructorReviewsPage />} />
+            <Route path="analytics" element={<InstructorAnalyticsPage />} />
+            <Route path="revenue" element={<InstructorRevenuePage />} />
+            <Route path="certificates" element={<InstructorCertificatesPage />} />
+            <Route path="notifications" element={<InstructorNotificationsPage />} />
+            <Route path="live-classes" element={<InstructorLiveClassesPage />} />
+            <Route path="calendar" element={<InstructorCalendarPage />} />
+            <Route path="settings" element={<InstructorSettingsPage />} />
+          </Route>
 
           <Route
             path="/admin/dashboard"
@@ -219,6 +129,7 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        <AiFloatingButton />
       </Router>
     </AuthProvider>
   );

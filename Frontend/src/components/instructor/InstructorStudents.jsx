@@ -63,16 +63,6 @@ export function InstructorStudents() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
-        {/* Top Header - mimicking the app header since it's embedded */}
-        <header className="h-[72px] bg-white/50 border-b border-gray-100 flex items-center justify-end px-8 shrink-0">
-          <div className="flex items-center gap-6 text-gray-500">
-            <button className="hover:text-gray-900"><div className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">?</div></button>
-            <span className="text-sm font-semibold hover:text-gray-900 cursor-pointer">Support</span>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
-            </div>
-          </div>
-        </header>
 
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
           <div className="max-w-6xl mx-auto">

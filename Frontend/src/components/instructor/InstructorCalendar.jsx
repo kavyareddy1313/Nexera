@@ -23,40 +23,6 @@ export function InstructorCalendar() {
     <div className="flex flex-1 overflow-hidden bg-[#f8f9fc]">
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
-        {/* Top Header */}
-        <header className="h-[88px] bg-[#f8f9fc] flex items-center justify-between px-10 shrink-0">
-          <div className="flex items-center gap-6">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Calendar</h1>
-            <div className="flex items-center bg-gray-100 rounded-full px-2 py-1.5 ml-4">
-              <button className="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
-                <ChevronLeft size={18} />
-              </button>
-              <span className="text-[15px] font-semibold text-gray-900 px-6">May 2025</span>
-              <button className="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="bg-gray-100 p-1 rounded-2xl flex items-center">
-              {['Month', 'Week', 'Day'].map(v => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-                    view === v ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-            <button className="flex items-center gap-2 bg-[#5c4ce3] text-white px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-indigo-700 transition-colors">
-              <Plus size={18} />
-              Add event
-            </button>
-          </div>
-        </header>
 
         <div className="flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar flex gap-8">
           

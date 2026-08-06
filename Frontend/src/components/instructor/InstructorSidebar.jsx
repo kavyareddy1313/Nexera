@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, 
+  MessageSquare,
   BookOpen, 
   Users,
   BarChart2,
@@ -20,6 +21,7 @@ export function InstructorSidebar() {
   
   const menuItems = [
     { name: 'Overview', icon: LayoutDashboard, path: '/instructor/dashboard' },
+    { name: 'Instructor Chat', icon: MessageSquare, path: '/instructor/messages' },
     { name: 'My Courses', icon: BookOpen, path: '/instructor/courses' },
     { name: 'Students', icon: Users, path: '/instructor/students' },
     { name: 'Reviews', icon: Star, path: '/instructor/reviews' },
