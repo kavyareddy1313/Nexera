@@ -33,7 +33,12 @@ import aiRoutes from './modules/ai/ai.routes.js';
 const app = express();
 const httpServer = createServer(app);
 
-app.use(helmet({ crossOriginResourcePolicy: false })); // allow images to load
+app.use(helmet({ 
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+  frameguard: false,
+  contentSecurityPolicy: false
+}));
 app.use(cors(corsConfig));
 app.use(compression());
 app.use(express.json());
@@ -42,6 +47,7 @@ app.use(requestLogger);
 app.use(globalRateLimit);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/v1/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', environment: env.NODE_ENV }));
 
