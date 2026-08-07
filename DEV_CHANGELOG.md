@@ -48,3 +48,7 @@
 - feat(ai-prompts): design flashcard extraction and MCQ generation prompts
 - *Status: Verified & Integrated*
 
+### Milestone 13
+- feat(course-generator): implement multi-phase orchestrator for automated curriculum building
+- *Status: Verified & Integrated*
+
