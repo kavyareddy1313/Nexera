@@ -232,3 +232,7 @@
 - feat(workspace): add multi-document context aggregation for cross-document Q&A
 - *Status: Verified & Integrated*
 
+### Milestone 59
+- feat(workspace): add citation source popovers with highlighted text snippet previews
+- *Status: Verified & Integrated*
+
