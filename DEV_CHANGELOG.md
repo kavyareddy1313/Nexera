@@ -224,3 +224,7 @@
 - chore(scripts): add automated database seed and migration utility scripts
 - *Status: Verified & Integrated*
 
+### Milestone 57
+- feat(analytics): add token usage and AI query latency instrumentation
+- *Status: Verified & Integrated*
+
