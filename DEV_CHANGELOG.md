@@ -60,3 +60,7 @@
 - feat(course-generator): add interactive quiz and flashcard generator per module
 - *Status: Verified & Integrated*
 
+### Milestone 16
+- refactor(course-generator): improve error recovery during long-running batch jobs
+- *Status: Verified & Integrated*
+
