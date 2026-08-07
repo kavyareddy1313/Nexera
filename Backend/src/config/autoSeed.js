@@ -56,6 +56,23 @@ export const autoSeedInstructorsAndCourses = async () => {
       );
     `);
 
+    // Ensure AiDocuments table exists
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "AiDocuments" (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES "Users"(id) ON DELETE CASCADE,
+        filename VARCHAR(500) NOT NULL,
+        file_type VARCHAR(100),
+        file_size INTEGER,
+        file_url VARCHAR(1000),
+        is_favorite BOOLEAN DEFAULT false,
+        tags TEXT[] DEFAULT '{}',
+        workspace_id VARCHAR(255),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
     const hashedPassword = await bcrypt.hash('Nexera@123', 12);
 
     const AVATAR_COLORS = [
