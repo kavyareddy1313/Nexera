@@ -9,6 +9,7 @@ import { LiveClassModal } from "./LiveClassModal";
 import { X, Forward, Star, Trash2, Copy } from "lucide-react";
 import useChatStore from "../../../store/useChatStore";
 import { useConversationStore } from "../../../store/useConversationStore";
+import useAuthStore from "../../../store/useAuthStore";
 
 export function MessageThreadView() {
   // --- STATE ---
@@ -28,6 +29,9 @@ export function MessageThreadView() {
 
   const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
   const [isLiveClassOpen, setIsLiveClassOpen] = useState(false);
+
+  const { user } = useAuthStore();
+  const currentUserId = user?.id || JSON.parse(localStorage.getItem("user") || "{}").id || "";
 
   const { messages, loading, fetchMessages, sendMessage } = useChatStore();
   const { activeConversationId, conversations } = useConversationStore();
@@ -49,6 +53,7 @@ export function MessageThreadView() {
 
   // --- HANDLERS ---
   const handleContextMenu = useCallback((e, message) => {
+    e.preventDefault();
     setContextMenu({
       isOpen: true,
       message,
@@ -56,27 +61,25 @@ export function MessageThreadView() {
     });
   }, []);
 
-  const handleAction = useCallback((action, message) => {
-    if (action === "forward") {
-      setIsSelectionMode(true);
-      setSelectedIds(new Set([message.id]));
-    } else if (action === "reply") {
+  const handleAction = (action, message) => {
+    if (action === "reply") {
       setReplyMessage(message);
-      setEditMessage(null);
     } else if (action === "edit") {
       setEditMessage(message);
-      setReplyMessage(null);
-    } else {
-      console.log(`Action ${action} on message ${message.id}`);
+    } else if (action === "select") {
+      setIsSelectionMode(true);
+      setSelectedIds(new Set([message.id]));
     }
-  }, []);
+  };
 
   const toggleSelection = useCallback((id) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      if (next.size === 0) setIsSelectionMode(false);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }, []);
@@ -102,12 +105,10 @@ export function MessageThreadView() {
               color: activeConversation?.avatarColorBg || "#5840D8",
             }}
             isGroup={activeConversation?.type === "group"}
-            memberCount={activeConversation?.type === "group" ? 2 : 1}
+            memberCount={activeConversation?.members?.length || 1}
             onlineStatus={activeConversation?.otherUserOnline ? "online" : "last seen recently"}
             conversationId={activeConversationId || ""}
-            currentUserId={
-              JSON.parse(localStorage.getItem("user") || "{}").id || ""
-            }
+            currentUserId={currentUserId}
             pinnedMessage=""
             onSearchClick={() => setIsSearchOpen(true)}
             onPinClick={() => console.log("Scroll to pinned")}
@@ -213,9 +214,9 @@ export function MessageThreadView() {
         <GroupInfoDrawer
           isOpen={isGroupInfoOpen}
           onClose={() => setIsGroupInfoOpen(false)}
-          groupId={activeConversation.id}
-          groupName={activeConversation.displayName}
-          isAdmin={true}
+          conversation={activeConversation}
+          currentUserId={currentUserId}
+          isAdmin={activeConversation?.isAdmin || activeConversation?.createdBy === currentUserId}
         />
       )}
 

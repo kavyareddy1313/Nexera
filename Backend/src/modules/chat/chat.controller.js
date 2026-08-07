@@ -27,7 +27,7 @@ export const getConversations = asyncHandler(async (req, res) => {
     // 1. Get conversations
     const convQuery = `
       SELECT 
-        c.id, c.type, c.name, c.avatar_url, c.last_message_id, c.last_activity_at,
+        c.id, c.type, c.name, c.description, c.avatar_url, c.created_by, c.last_message_id, c.last_activity_at,
         (
           SELECT json_build_object(
             'id', m.id, 'content', m.content, 'type', m.type, 'sender_id', m.sender_id, 'created_at', m.created_at
@@ -37,14 +37,16 @@ export const getConversations = asyncHandler(async (req, res) => {
         (
           SELECT json_agg(json_build_object(
             'user_id', cm2.user_id,
+            'role', cm2.role,
             'is_muted', cm2.is_muted,
             'is_pinned', cm2.is_pinned,
             'is_archived', cm2.is_archived,
             'unread_count', cm2.unread_count,
+            'joined_at', cm2.joined_at,
             'profile', (SELECT json_build_object(
               'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
               'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-              'initials', p.initials, 'status', p.status
+              'initials', p.initials, 'status', p.status, 'last_seen_at', p.last_seen_at
             ) FROM public.profiles p WHERE p.id = cm2.user_id)
           ))
           FROM public.conversation_members cm2 
@@ -72,12 +74,14 @@ export const getConversations = asyncHandler(async (req, res) => {
 
     // Format conversations to match what frontend expects
     const formattedConversations = conversations.map(c => {
-      const myMembership = c.members.find(m => m.user_id === req.user.id);
+      const myMembership = c.members ? c.members.find(m => m.user_id === req.user.id) : null;
       
       const formatted = {
         id: c.id,
         type: c.type,
         displayName: c.name,
+        description: c.description || (c.type === 'group' ? `Official community group for "${c.name}".` : ''),
+        createdBy: c.created_by,
         avatarUrl: c.avatar_url,
         last_message: c.last_message?.content || null,
         last_message_at: c.last_message?.created_at || null,
@@ -85,7 +89,9 @@ export const getConversations = asyncHandler(async (req, res) => {
         isMuted: myMembership?.is_muted || false,
         isPinned: myMembership?.is_pinned || false,
         isArchived: myMembership?.is_archived || false,
-        members: c.members
+        role: myMembership?.role || 'member',
+        isAdmin: myMembership?.role === 'admin' || c.created_by === req.user.id,
+        members: c.members || []
       };
 
       if (c.type === 'dm') {
@@ -229,7 +235,7 @@ export const searchUsers = asyncHandler(async (req, res) => {
 const fetchAndFormatConversation = async (client, conversationId, currentUserId) => {
   const query = `
     SELECT 
-      c.id, c.type, c.name, c.avatar_url, c.last_message_id, c.last_activity_at,
+      c.id, c.type, c.name, c.description, c.avatar_url, c.created_by, c.last_message_id, c.last_activity_at,
       (
         SELECT json_build_object(
           'id', m.id, 'content', m.content, 'type', m.type, 'sender_id', m.sender_id, 'created_at', m.created_at
@@ -239,14 +245,16 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
       (
         SELECT json_agg(json_build_object(
           'user_id', cm2.user_id,
+          'role', cm2.role,
           'is_muted', cm2.is_muted,
           'is_pinned', cm2.is_pinned,
           'is_archived', cm2.is_archived,
           'unread_count', cm2.unread_count,
+          'joined_at', cm2.joined_at,
           'profile', (SELECT json_build_object(
             'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
             'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-            'initials', p.initials, 'status', p.status
+            'initials', p.initials, 'status', p.status, 'last_seen_at', p.last_seen_at
           ) FROM public.profiles p WHERE p.id = cm2.user_id)
         ))
         FROM public.conversation_members cm2 
@@ -258,11 +266,13 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
   const { rows } = await client.query(query, [conversationId]);
   if (rows.length === 0) return null;
   const c = rows[0];
-  const myMembership = c.members.find(m => m.user_id === currentUserId);
+  const myMembership = c.members ? c.members.find(m => m.user_id === currentUserId) : null;
   const formatted = {
     id: c.id,
     type: c.type,
     displayName: c.name,
+    description: c.description || (c.type === 'group' ? `Official community group for "${c.name}".` : ''),
+    createdBy: c.created_by,
     avatarUrl: c.avatar_url,
     last_message: c.last_message?.content || null,
     last_message_at: c.last_message?.created_at || null,
@@ -270,7 +280,9 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
     isMuted: myMembership?.is_muted || false,
     isPinned: myMembership?.is_pinned || false,
     isArchived: myMembership?.is_archived || false,
-    members: c.members
+    role: myMembership?.role || 'member',
+    isAdmin: myMembership?.role === 'admin' || c.created_by === currentUserId,
+    members: c.members || []
   };
 
   if (c.type === 'dm') {
