@@ -192,3 +192,7 @@
 - perf(frontend): optimize bundle splitting and lazy loading for heavy UI routes
 - *Status: Verified & Integrated*
 
+### Milestone 49
+- perf(frontend): memoize PDF page rendering to prevent redundant canvas repaints
+- *Status: Verified & Integrated*
+
