@@ -44,3 +44,7 @@
 - feat(ai-prompts): design beginner and expert concept breakdown prompt templates
 - *Status: Verified & Integrated*
 
+### Milestone 12
+- feat(ai-prompts): design flashcard extraction and MCQ generation prompts
+- *Status: Verified & Integrated*
+
