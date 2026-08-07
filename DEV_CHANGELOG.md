@@ -80,3 +80,7 @@
 - feat(database): define CourseModule, CourseLesson, and CourseQuiz relational schemas
 - *Status: Verified & Integrated*
 
+### Milestone 21
+- feat(auth): configure role-based access control middleware for instructor and student roles
+- *Status: Verified & Integrated*
+
