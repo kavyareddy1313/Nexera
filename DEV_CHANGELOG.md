@@ -104,3 +104,7 @@
 - feat(rate-limit): configure redis-backed rate limiters for AI and authentication endpoints
 - *Status: Verified & Integrated*
 
+### Milestone 27
+- feat(realtime): configure Socket.io event emitter for course generation progress updates
+- *Status: Verified & Integrated*
+
