@@ -156,3 +156,7 @@
 - feat(store): configure Zustand store for global AI chat session state
 - *Status: Verified & Integrated*
 
+### Milestone 40
+- feat(store): configure Zustand store for course generation wizard state persistence
+- *Status: Verified & Integrated*
+
