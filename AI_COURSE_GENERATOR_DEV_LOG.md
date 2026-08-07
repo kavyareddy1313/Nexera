@@ -58,3 +58,4 @@
 - [x] Development step 56 completed.
 - [x] Development step 57 completed.
 - [x] Development step 58 completed.
+- [x] Development step 59 completed.
