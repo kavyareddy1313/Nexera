@@ -204,3 +204,7 @@
 - docs(api): add OpenAPI documentation for AI document workspace endpoints
 - *Status: Verified & Integrated*
 
+### Milestone 52
+- docs(api): add OpenAPI documentation for course generation orchestrator routes
+- *Status: Verified & Integrated*
+
