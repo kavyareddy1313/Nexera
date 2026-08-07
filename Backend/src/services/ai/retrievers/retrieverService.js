@@ -1,14 +1,82 @@
+import fs from 'fs';
+import path from 'path';
 import { BaseRetriever } from '@langchain/core/retrievers';
 import { Document } from '@langchain/core/documents';
 import { getVectorStore } from '../vectorstores/supabaseVectorStore.js';
 import { supabaseAdmin } from '../../../config/supabaseClient.js';
 import { aiConfig } from '../../../config/ai.config.js';
+import AiDocument from '../../../models/AiDocument.js';
+import { loadDocument } from '../loaders/index.js';
 
 /**
  * RetrieverService
  * High-performance hybrid search (Dense Vector + Sparse Keyword FTS + RRF Re-ranking).
  */
 export class RetrieverService {
+  /**
+   * Helper to load document directly from disk when vector search returns 0 results
+   */
+  static async loadDirectDocumentFallback(filter = {}) {
+    const documentId = typeof filter === 'string' ? filter : filter?.documentId;
+    const directFileUrl = typeof filter === 'object' ? filter?.fileUrl : null;
+    const directFileName = typeof filter === 'object' ? filter?.fileName : null;
+
+    try {
+      let filePath = null;
+      let fileName = directFileName || 'document.pdf';
+      let mimeType = 'application/pdf';
+
+      if (directFileUrl) {
+        const cleanPath = directFileUrl.replace(/^\//, '').replace(/^api\/v1\//, '');
+        const candidate = path.join(process.cwd(), cleanPath);
+        if (fs.existsSync(candidate)) filePath = candidate;
+      }
+
+      if (!filePath && documentId) {
+        try {
+          const aiDoc = await AiDocument.findByPk(documentId);
+          if (aiDoc && aiDoc.fileUrl) {
+            const cleanPath = aiDoc.fileUrl.replace(/^\//, '').replace(/^api\/v1\//, '');
+            const candidate = path.join(process.cwd(), cleanPath);
+            if (fs.existsSync(candidate)) {
+              filePath = candidate;
+              fileName = aiDoc.filename || fileName;
+              mimeType = aiDoc.fileType || mimeType;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // If still not found, search uploads/ai-docs for matching files
+      if (!filePath) {
+        const aiDocsDir = path.join(process.cwd(), 'uploads', 'ai-docs');
+        if (fs.existsSync(aiDocsDir)) {
+          const files = fs.readdirSync(aiDocsDir).filter(f => !f.startsWith('.'));
+          if (files.length > 0) {
+            const matched = (documentId && files.find(f => f.includes(documentId))) || files[files.length - 1];
+            filePath = path.join(aiDocsDir, matched);
+            fileName = fileName || matched;
+          }
+        }
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) return [];
+
+      const fileBuffer = fs.readFileSync(filePath);
+      const loaded = await loadDocument({
+        source: fileBuffer,
+        fileName,
+        mimeType,
+        metadata: { documentId: documentId || 'doc_1', fileName },
+      });
+
+      return loaded || [];
+    } catch (err) {
+      console.warn('[RetrieverService] Direct document fallback failed:', err.message);
+      return [];
+    }
+  }
+
   /**
    * Reciprocal Rank Fusion (RRF) algorithm
    * @param {Array<Document[]>} rankedLists - Array of ranked document arrays from different search methods
@@ -131,7 +199,9 @@ export class RetrieverService {
     const useHybrid = options.useHybrid !== false;
 
     if (!useHybrid) {
-      return await this.searchDense(query, options);
+      const dense = await this.searchDense(query, options);
+      if (dense.length > 0) return dense;
+      return await this.loadDirectDocumentFallback(options.filter);
     }
 
     // Execute Dense and Sparse retrieval in parallel
@@ -141,8 +211,13 @@ export class RetrieverService {
     ]);
 
     // If one method returned no results, fallback to the other
-    if (denseDocs.length === 0) return sparseDocs.slice(0, k);
-    if (sparseDocs.length === 0) return denseDocs.slice(0, k);
+    if (denseDocs.length === 0 && sparseDocs.length > 0) return sparseDocs.slice(0, k);
+    if (sparseDocs.length === 0 && denseDocs.length > 0) return denseDocs.slice(0, k);
+
+    // If both returned no results, fallback directly to disk document loader
+    if (denseDocs.length === 0 && sparseDocs.length === 0) {
+      return await this.loadDirectDocumentFallback(options.filter);
+    }
 
     // Apply Reciprocal Rank Fusion
     const fusedResults = this.applyRRF([denseDocs, sparseDocs]);
