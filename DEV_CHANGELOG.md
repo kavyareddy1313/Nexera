@@ -180,3 +180,7 @@
 - test(ai-chains): add integration tests for streaming RAG pipelines
 - *Status: Verified & Integrated*
 
+### Milestone 46
+- test(course-gen): add validation tests for course curriculum generator output
+- *Status: Verified & Integrated*
+
