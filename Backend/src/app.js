@@ -5,6 +5,11 @@ import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import { env } from './config/env.js';
 import { corsConfig } from './config/cors.js';
@@ -28,13 +33,15 @@ import aiRoutes from './modules/ai/ai.routes.js';
 const app = express();
 const httpServer = createServer(app);
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false })); // allow images to load
 app.use(cors(corsConfig));
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
 app.use(globalRateLimit);
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', environment: env.NODE_ENV }));
 
