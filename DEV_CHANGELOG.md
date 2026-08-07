@@ -148,3 +148,7 @@
 - feat(frontend-ui): integrate Markdown renderer with syntax highlighting for code blocks
 - *Status: Verified & Integrated*
 
+### Milestone 38
+- feat(frontend-ui): implement responsive collapsible sidebar for mobile and desktop
+- *Status: Verified & Integrated*
+
