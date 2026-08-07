@@ -56,3 +56,7 @@
 - feat(course-generator): implement lesson outline generation with learning objectives
 - *Status: Verified & Integrated*
 
+### Milestone 15
+- feat(course-generator): add interactive quiz and flashcard generator per module
+- *Status: Verified & Integrated*
+
