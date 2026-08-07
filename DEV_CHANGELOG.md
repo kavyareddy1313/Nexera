@@ -236,3 +236,7 @@
 - feat(workspace): add citation source popovers with highlighted text snippet previews
 - *Status: Verified & Integrated*
 
+### Milestone 60
+- style(workspace): polish chat bubble animations and glowing AI response indicator
+- *Status: Verified & Integrated*
+
