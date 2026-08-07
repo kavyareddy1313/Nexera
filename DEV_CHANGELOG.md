@@ -132,3 +132,7 @@
 - feat(frontend-ui): implement Interactive Quiz component with instant score feedback
 - *Status: Verified & Integrated*
 
+### Milestone 34
+- feat(frontend-ui): design course generation wizard step-by-step UI
+- *Status: Verified & Integrated*
+
