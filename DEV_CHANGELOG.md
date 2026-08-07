@@ -176,3 +176,7 @@
 - test(ai-retriever): add unit tests for hybrid vector and keyword fusion
 - *Status: Verified & Integrated*
 
+### Milestone 45
+- test(ai-chains): add integration tests for streaming RAG pipelines
+- *Status: Verified & Integrated*
+
