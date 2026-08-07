@@ -68,3 +68,7 @@
 - feat(course-generator): integrate reference document parser into course outline generation
 - *Status: Verified & Integrated*
 
+### Milestone 18
+- feat(database): define AiDocument and DocumentChunk Sequelize models with metadata indices
+- *Status: Verified & Integrated*
+
