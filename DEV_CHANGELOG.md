@@ -64,3 +64,7 @@
 - refactor(course-generator): improve error recovery during long-running batch jobs
 - *Status: Verified & Integrated*
 
+### Milestone 17
+- feat(course-generator): integrate reference document parser into course outline generation
+- *Status: Verified & Integrated*
+
