@@ -9,6 +9,7 @@ import {
   Settings,
   Sparkles,
   User,
+  Folder,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import logoUrl from "../../assets/logo.png";
@@ -21,6 +22,7 @@ export function GlobalNavRail({ activeRoute = "/chat" }) {
     { route: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { route: "/chat", label: "Messages", icon: MessageSquare },
     { route: "/courses", label: "Courses", icon: BookOpen },
+    { route: "/ai/documents", label: "AI Documents", icon: Folder },
     { 
       route: "/live", 
       label: "Live Classes", 
