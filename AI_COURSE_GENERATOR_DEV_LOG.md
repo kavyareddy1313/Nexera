@@ -5,3 +5,4 @@
 - [x] Development step 3 completed.
 - [x] Development step 4 completed.
 - [x] Development step 5 completed.
+- [x] Development step 6 completed.
