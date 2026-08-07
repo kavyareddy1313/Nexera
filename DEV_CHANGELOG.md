@@ -160,3 +160,7 @@
 - feat(store): configure Zustand store for course generation wizard state persistence
 - *Status: Verified & Integrated*
 
+### Milestone 41
+- feat(store): configure Zustand store for document library and active workspace
+- *Status: Verified & Integrated*
+
