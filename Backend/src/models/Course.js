@@ -39,6 +39,11 @@ const Course = sequelize.define('Course', {
   },
   duration: {
     type: DataTypes.STRING,
+  },
+  conversationId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'conversation_id',
   }
 }, {
   underscored: true,

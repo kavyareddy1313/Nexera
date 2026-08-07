@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Sidebar } from "../components/chat/Sidebar";
 import { ActiveConversation } from "../components/chat/ActiveConversation";
 import { useConversationStore } from "../store/useConversationStore";
@@ -8,8 +9,9 @@ import { cn } from "../lib/utils";
 import { GlobalNavRail } from "../components/layout/GlobalNavRail";
 
 export default function ChatShell() {
-  const { activeConversationId, setConversations } = useConversationStore();
+  const { activeConversationId, setConversations, setActiveConversationId } = useConversationStore();
   const { initSocket, disconnectSocket } = useChatStore();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Initialize socket connection
   useEffect(() => {
@@ -27,13 +29,24 @@ export default function ChatShell() {
         const response = await api.get("/chat/conversations");
         const { conversations = [], contacts = [] } = response.data;
         setConversations(conversations, contacts);
+
+        // If ?convo=<id> query param is present, auto-open that conversation
+        const targetConvoId = searchParams.get("convo");
+        if (targetConvoId) {
+          // Small delay to let conversations hydrate in the store
+          setTimeout(() => {
+            setActiveConversationId(targetConvoId);
+          }, 300);
+          // Clear the query param to avoid re-triggering
+          setSearchParams({}, { replace: true });
+        }
       } catch (error) {
         console.error("Fetch conversations error:", error);
       }
     };
 
     fetchConversations();
-  }, [setConversations]);
+  }, [setConversations, searchParams, setActiveConversationId, setSearchParams]);
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 overflow-hidden font-sans antialiased select-none">
