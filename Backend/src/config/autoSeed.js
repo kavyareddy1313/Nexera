@@ -1,6 +1,5 @@
 import { Client } from 'pg';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { env } from './env.js';
 import { logger } from '../middleware/requestLogger.js';
 
@@ -12,15 +11,51 @@ export const autoSeedInstructorsAndCourses = async () => {
 
   try {
     await client.connect();
-    
-    // Check if courses already exist
-    const checkCourses = await client.query(`SELECT COUNT(*) as count FROM "Courses"`);
-    const courseCount = parseInt(checkCourses.rows[0]?.count || '0', 10);
 
-    const checkInstructors = await client.query(`SELECT COUNT(*) as count FROM "Users" WHERE role = 'instructor'`);
-    const instructorCount = parseInt(checkInstructors.rows[0]?.count || '0', 10);
+    // 1. Ensure table schema is up to date
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "Courses" (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        thumbnail_url VARCHAR(500),
+        rating DECIMAL(3, 1) DEFAULT 4.8,
+        students_enrolled INTEGER DEFAULT 0,
+        category VARCHAR(255),
+        duration VARCHAR(255),
+        instructor_id UUID REFERENCES "Users"(id) ON DELETE SET NULL,
+        conversation_id UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
 
-    // If we already have instructors and courses, let's just make sure passwords and profiles are synced
+    // Ensure all columns exist in Courses
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS instructor_id UUID;`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS conversation_id UUID;`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS students_enrolled INTEGER DEFAULT 0;`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS thumbnail_url VARCHAR(500);`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS rating DECIMAL(3, 1) DEFAULT 4.8;`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS category VARCHAR(255);`);
+    await client.query(`ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS duration VARCHAR(255);`);
+
+    // Ensure CourseEnrollments table exists
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "CourseEnrollments" (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES "Users"(id) ON DELETE CASCADE,
+        course_id UUID NOT NULL REFERENCES "Courses"(id) ON DELETE CASCADE,
+        razorpay_order_id VARCHAR(255),
+        razorpay_payment_id VARCHAR(255),
+        payment_status VARCHAR(50) DEFAULT 'pending',
+        amount_paid DECIMAL(10, 2) DEFAULT 0.00,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, course_id)
+      );
+    `);
+
     const hashedPassword = await bcrypt.hash('Nexera@123', 12);
 
     const AVATAR_COLORS = [
@@ -183,7 +218,6 @@ export const autoSeedInstructorsAndCourses = async () => {
       if (existingCourse.rows.length > 0) {
         conversationId = existingCourse.rows[0].conversation_id;
         
-        // If conversation_id is missing, create the community group
         if (!conversationId) {
           const convoUUID = (await client.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
           await client.query(
@@ -204,7 +238,6 @@ export const autoSeedInstructorsAndCourses = async () => {
           conversationId = convoUUID;
         }
 
-        // Ensure instructor is admin of the group
         await client.query(
           `INSERT INTO public.conversation_members (conversation_id, user_id, role)
            VALUES ($1, $2, 'admin')
@@ -212,7 +245,6 @@ export const autoSeedInstructorsAndCourses = async () => {
           [conversationId, instructor.id]
         );
 
-        // Update course details
         await client.query(
           `UPDATE "Courses" 
            SET description = $1, price = $2, thumbnail_url = $3, rating = $4, students_enrolled = $5, category = $6, duration = $7, instructor_id = $8, updated_at = NOW()
@@ -220,7 +252,6 @@ export const autoSeedInstructorsAndCourses = async () => {
           [c.description, c.price, c.thumbnail, c.rating, c.students, c.category, c.duration, instructor.id, existingCourse.rows[0].id]
         );
       } else {
-        // Create new course & group
         const courseUUID = (await client.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
         const convoUUID = (await client.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
 

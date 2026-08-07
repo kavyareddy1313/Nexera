@@ -114,16 +114,23 @@ router.get('/my-enrollments', requireAuth, asyncHandler(async (req, res) => {
 // GET /api/courses
 // ═══════════════════════════════════════════════════════════
 router.get('/', asyncHandler(async (req, res) => {
-  const courses = await Course.findAll({
-    include: [{
-      model: User,
-      as: 'instructor',
-      attributes: ['id', 'fullName', 'avatarUrl']
-    }],
-    order: [['createdAt', 'DESC']]
-  });
-  
-  res.json(ApiResponse.ok(courses));
+  try {
+    const courses = await Course.findAll({
+      include: [{
+        model: User,
+        as: 'instructor',
+        attributes: ['id', 'fullName', 'avatarUrl', 'username']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+    return res.json(ApiResponse.ok(courses));
+  } catch (err) {
+    console.error('Error fetching courses with instructor include:', err);
+    const fallbackCourses = await Course.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+    return res.json(ApiResponse.ok(fallbackCourses));
+  }
 }));
 
 // ═══════════════════════════════════════════════════════════
@@ -131,11 +138,21 @@ router.get('/', asyncHandler(async (req, res) => {
 // Returns all courses created/published by the authenticated instructor
 // ═══════════════════════════════════════════════════════════
 router.get('/instructor/my-courses', requireAuth, asyncHandler(async (req, res) => {
-  const courses = await Course.findAll({
-    where: { instructor_id: req.user.id },
-    order: [['createdAt', 'DESC']]
-  });
-  res.json(ApiResponse.ok(courses));
+  try {
+    const courses = await Course.findAll({
+      where: { instructorId: req.user.id },
+      order: [['createdAt', 'DESC']]
+    });
+    return res.json(ApiResponse.ok(courses));
+  } catch (err) {
+    console.error('Error fetching instructor courses:', err);
+    // Try with underscore field if necessary
+    const courses = await Course.findAll({
+      where: { instructor_id: req.user.id },
+      order: [['createdAt', 'DESC']]
+    });
+    return res.json(ApiResponse.ok(courses));
+  }
 }));
 
 // ═══════════════════════════════════════════════════════════
