@@ -8,3 +8,7 @@
 - refactor(ai-pipeline): optimize recursive token splitter overlap thresholds
 - *Status: Verified & Integrated*
 
+### Milestone 3
+- perf(ai-engine): implement memory caching for frequently queried embeddings
+- *Status: Verified & Integrated*
+
