@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Video, PenTool, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { MessageSquare, Video, PenTool, Eye, EyeOff, Loader2, BookOpen, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { z } from 'zod';
+import logoUrl from '../assets/logo.png';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -117,6 +118,13 @@ export default function AuthPage() {
     }
   };
 
+  const handleInstructorLogin = async (email) => {
+    const success = await login(email, 'Nexera@123');
+    if (success) {
+      navigate('/instructor/dashboard');
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Left side - Dark Theme Hero */}
@@ -130,51 +138,61 @@ export default function AuthPage() {
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-32">
-            <div className="w-8 h-8 grid grid-cols-3 grid-rows-3 gap-[2px]">
-               {[...Array(9)].map((_, i) => (
-                 <div key={i} className={`rounded-full ${i === 4 ? 'bg-indigo-500' : 'bg-indigo-400/50'}`} />
-               ))}
+          <div className="flex items-center gap-3.5 mb-16">
+            <div className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white shadow-md shadow-black/25 p-2 ring-2 ring-indigo-500/20">
+              <img src={logoUrl} alt="Nexera" className="w-full h-full object-contain" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">Nexera</span>
+            <span className="text-2xl font-extrabold tracking-tight">Nexera</span>
           </div>
 
-          <h1 className="text-2xl font-bold mb-12 tracking-wide text-gray-100">
+          <h1 className="text-2xl font-bold mb-10 tracking-wide text-gray-100">
             Elevate your team's digital synergy.
           </h1>
 
-          <div className="space-y-10">
+          <div className="space-y-8">
             <div className="flex gap-5 items-start">
-              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5">
-                <MessageSquare size={24} />
+              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5 shrink-0">
+                <BookOpen size={22} />
               </div>
-              <div className="mt-1">
-                <h3 className="font-bold text-lg mb-1.5 tracking-wide">Unified Messaging</h3>
-                <p className="text-gray-400 text-sm leading-relaxed max-w-md font-medium">
+              <div className="mt-0.5">
+                <h3 className="font-bold text-base mb-1 tracking-wide">Interactive Courses & AI</h3>
+                <p className="text-gray-400 text-xs leading-relaxed max-w-md font-medium">
+                  Enrolled course community groups, AI document intelligence, and instant course generation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 items-start">
+              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5 shrink-0">
+                <MessageSquare size={22} />
+              </div>
+              <div className="mt-0.5">
+                <h3 className="font-bold text-base mb-1 tracking-wide">Unified Messaging</h3>
+                <p className="text-gray-400 text-xs leading-relaxed max-w-md font-medium">
                   Contextual threads and AI-driven summaries keep your conversations actionable.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-5 items-start">
-              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5">
-                <Video size={24} />
+              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5 shrink-0">
+                <Video size={22} />
               </div>
-              <div className="mt-1">
-                <h3 className="font-bold text-lg mb-1.5 tracking-wide">Video Meetings</h3>
-                <p className="text-gray-400 text-sm leading-relaxed max-w-md font-medium">
+              <div className="mt-0.5">
+                <h3 className="font-bold text-base mb-1 tracking-wide">Video Meetings</h3>
+                <p className="text-gray-400 text-xs leading-relaxed max-w-md font-medium">
                   Crystal clear 4K collaboration with real-time transcription and spatial audio.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-5 items-start">
-              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5">
-                <PenTool size={24} />
+              <div className="p-3.5 bg-[#171A21] rounded-xl text-indigo-400 shadow-sm border border-white/5 shrink-0">
+                <PenTool size={22} />
               </div>
-              <div className="mt-1">
-                <h3 className="font-bold text-lg mb-1.5 tracking-wide">Infinite Whiteboard</h3>
-                <p className="text-gray-400 text-sm leading-relaxed max-w-md font-medium">
+              <div className="mt-0.5">
+                <h3 className="font-bold text-base mb-1 tracking-wide">Infinite Whiteboard</h3>
+                <p className="text-gray-400 text-xs leading-relaxed max-w-md font-medium">
                   Visualize complex ideas instantly with our responsive, high-fidelity canvas.
                 </p>
               </div>
@@ -327,9 +345,43 @@ export default function AuthPage() {
             Continue with Google
           </button>
 
-          {/* Quick Developer Login */}
+          {/* Quick Instructor Demo Logins */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest text-center mb-4">Quick Developer Login</p>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest text-center mb-3">
+              ⚡ Quick Instructor Demo Login
+            </p>
+            <div className="grid grid-cols-1 gap-2 mb-4">
+              {[
+                { name: 'Dr. Ananya Sharma', role: 'AI & Data Science', email: 'ananya@nexera.dev', color: 'border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-900' },
+                { name: 'Prof. James Mitchell', role: 'Cloud Architecture', email: 'james@nexera.dev', color: 'border-pink-200 bg-pink-50/50 hover:bg-pink-50 text-pink-900' },
+                { name: 'Elena Rostova', role: 'Full Stack & DevOps', email: 'elena@nexera.dev', color: 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-900' },
+              ].map(inst => (
+                <button
+                  key={inst.email}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => handleInstructorLogin(inst.email)}
+                  className={`flex items-center justify-between p-2.5 px-3.5 rounded-xl border text-left transition-all ${inst.color} disabled:opacity-50 shadow-xs group`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center font-bold text-xs shadow-xs">
+                      🎓
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs">{inst.name}</div>
+                      <div className="text-[10px] opacity-75 font-medium">{inst.role}</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    Login →
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center mb-2.5">
+              Quick Student Demo Login
+            </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[1, 2, 3, 4, 5].map(num => (
                 <button
@@ -337,9 +389,9 @@ export default function AuthPage() {
                   type="button"
                   disabled={isLoading}
                   onClick={() => handleQuickLogin(num)}
-                  className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
                 >
-                  Test {num}
+                  Student {num}
                 </button>
               ))}
             </div>
