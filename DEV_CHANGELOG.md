@@ -40,3 +40,7 @@
 - feat(ai-prompts): design comprehensive prompt templates for document summarization
 - *Status: Verified & Integrated*
 
+### Milestone 11
+- feat(ai-prompts): design beginner and expert concept breakdown prompt templates
+- *Status: Verified & Integrated*
+
