@@ -41,10 +41,18 @@ export const getMessages = asyncHandler(async (req, res) => {
         m.id, m.conversation_id, m.sender_id, m.type, m.content, 
         m.metadata, m.reply_to_id, m.is_edited, m.edited_at,
         m.forwarded_from, m.created_at, m.deleted_at, m.deleted_for,
-        p.full_name as sender_name, p.avatar_url as sender_avatar,
-        p.avatar_color_bg as sender_color_bg, p.initials as sender_initials
+        COALESCE(p.full_name, 'Unknown') as sender_name, p.avatar_url as sender_avatar,
+        '#3B82F6' as sender_color_bg, substring(COALESCE(p.full_name, 'U') from 1 for 2) as sender_initials,
+        (
+          SELECT json_agg(json_build_object('user_id', ms.user_id, 'status', ms.status, 'read_at', ms.read_at))
+          FROM public.message_statuses ms WHERE ms.message_id = m.id
+        ) as statuses,
+        (
+          SELECT json_agg(json_build_object('emoji', mr.emoji, 'user_id', mr.user_id))
+          FROM public.message_reactions mr WHERE mr.message_id = m.id
+        ) as reactions
       FROM public.messages m
-      LEFT JOIN public.profiles p ON p.id = m.sender_id
+      LEFT JOIN public."Users" p ON p.id = m.sender_id
       WHERE m.conversation_id = $1
     `;
     const params = [id];
