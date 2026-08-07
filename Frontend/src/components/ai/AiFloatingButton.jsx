@@ -36,7 +36,7 @@ export default function AiFloatingButton() {
     <>
       {/* Floating Action Button (rendered on non-chat pages, or accessible via GlobalNavRail) */}
       {!isChatRoute && (
-        <div className="fixed bottom-6 right-6 z-[99990]">
+        <div className="fixed bottom-24 right-6 z-[99990]">
           <button
             type="button"
             onClick={(e) => {
