@@ -39,6 +39,15 @@ export const connectDB = async () => {
           ALTER TABLE course_generation_jobs 
           ADD COLUMN IF NOT EXISTS intermediate_state JSONB DEFAULT '{"lessonsData": {}, "quizzesData": {}, "resourcesData": {}}'::jsonb;
         `);
+        await sequelize.query(`
+          ALTER TABLE "Courses" 
+          ADD COLUMN IF NOT EXISTS generation_job_id UUID,
+          ADD COLUMN IF NOT EXISTS level VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS language VARCHAR(255) DEFAULT 'English',
+          ADD COLUMN IF NOT EXISTS tags VARCHAR(255)[],
+          ADD COLUMN IF NOT EXISTS status VARCHAR(255) DEFAULT 'draft',
+          ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH TIME ZONE;
+        `);
         logger.info('✅ Manual Migrations: Applied');
       } catch (migErr) {
         logger.error(`❌ Manual Migration Failed: ${migErr.message}`);
