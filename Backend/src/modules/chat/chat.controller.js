@@ -45,9 +45,9 @@ export const getConversations = asyncHandler(async (req, res) => {
             'joined_at', cm2.joined_at,
             'profile', (SELECT json_build_object(
               'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
-              'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-              'initials', p.initials, 'status', p.status, 'last_seen_at', p.last_seen_at
-            ) FROM public.profiles p WHERE p.id = cm2.user_id)
+              'avatar_color_bg', '#3B82F6', 'avatar_color_text', '#FFFFFF',
+              'initials', substring(p.full_name from 1 for 1), 'status', CASE WHEN p.is_online THEN 'online' ELSE 'offline' END
+            ) FROM public."Users" p WHERE p.id = cm2.user_id)
           ))
           FROM public.conversation_members cm2 
           WHERE cm2.conversation_id = c.id
@@ -63,11 +63,11 @@ export const getConversations = asyncHandler(async (req, res) => {
     // 2. Only get connected contacts (users already in DMs with current user)
     const contactsQuery = `
       SELECT DISTINCT
-        p.id, p.full_name, p.avatar_url, p.avatar_color_bg, p.avatar_color_text, p.initials, p.status
+        p.id, p.full_name, p.avatar_url, '#3B82F6' as avatar_color_bg, '#FFFFFF' as avatar_color_text, substring(p.full_name from 1 for 1) as initials, CASE WHEN p.is_online THEN 'online' ELSE 'offline' END as status
       FROM public.conversations c
       JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id AND cm1.user_id = $1
       JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id != $1
-      JOIN public.profiles p ON p.id = cm2.user_id
+      JOIN public."Users" p ON p.id = cm2.user_id
       WHERE c.type = 'dm'
     `;
     const { rows: contacts } = await client.query(contactsQuery, [req.user.id]);
@@ -142,60 +142,57 @@ export const searchUsers = asyncHandler(async (req, res) => {
     if (q) {
       query = `
         SELECT 
-          COALESCE(u.id, p.id) AS id,
-          COALESCE(u.full_name, p.full_name, 'Nexera User') AS full_name,
-          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, p.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
+          u.id AS id,
+          COALESCE(u.full_name, 'Nexera User') AS full_name,
+          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
           COALESCE(u.email, '') AS email,
-          COALESCE(p.avatar_url, u.avatar_url) AS avatar_url,
-          COALESCE(p.avatar_color_bg, '#6366f1') AS avatar_color_bg,
-          COALESCE(p.avatar_color_text, '#ffffff') AS avatar_color_text,
-          COALESCE(p.initials, UPPER(SUBSTRING(COALESCE(u.full_name, p.full_name, 'U') FROM 1 FOR 2))) AS initials,
-          COALESCE(p.status, CASE WHEN u.is_online THEN 'online' ELSE 'offline' END) AS status,
+          u.avatar_url AS avatar_url,
+          '#6366f1' AS avatar_color_bg,
+          '#ffffff' AS avatar_color_text,
+          UPPER(SUBSTRING(COALESCE(u.full_name, 'U') FROM 1 FOR 2)) AS initials,
+          CASE WHEN u.is_online THEN 'online' ELSE 'offline' END AS status,
           (
             SELECT c.id FROM public.conversations c
             JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id
             JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id
-            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = COALESCE(u.id, p.id)
+            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = u.id
             LIMIT 1
           ) AS conversation_id
-        FROM public.profiles p
-        FULL OUTER JOIN "Users" u ON u.id = p.id
-        WHERE COALESCE(u.id, p.id) != $1
+        FROM public."Users" u
+        WHERE u.id != $1
           AND (
             u.username ILIKE $2
             OR u.full_name ILIKE $2
             OR u.email ILIKE $2
-            OR p.full_name ILIKE $2
           )
         ORDER BY 
           CASE WHEN u.username ILIKE $3 THEN 0 ELSE 1 END,
-          COALESCE(u.full_name, p.full_name) ASC
+          u.full_name ASC
         LIMIT 20
       `;
       params = [currentUserId, `%${q}%`, `${q}%`];
     } else {
       query = `
         SELECT 
-          COALESCE(u.id, p.id) AS id,
-          COALESCE(u.full_name, p.full_name, 'Nexera User') AS full_name,
-          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, p.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
+          u.id AS id,
+          COALESCE(u.full_name, 'Nexera User') AS full_name,
+          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
           COALESCE(u.email, '') AS email,
-          COALESCE(p.avatar_url, u.avatar_url) AS avatar_url,
-          COALESCE(p.avatar_color_bg, '#6366f1') AS avatar_color_bg,
-          COALESCE(p.avatar_color_text, '#ffffff') AS avatar_color_text,
-          COALESCE(p.initials, UPPER(SUBSTRING(COALESCE(u.full_name, p.full_name, 'U') FROM 1 FOR 2))) AS initials,
-          COALESCE(p.status, CASE WHEN u.is_online THEN 'online' ELSE 'offline' END) AS status,
+          u.avatar_url AS avatar_url,
+          '#6366f1' AS avatar_color_bg,
+          '#ffffff' AS avatar_color_text,
+          UPPER(SUBSTRING(COALESCE(u.full_name, 'U') FROM 1 FOR 2)) AS initials,
+          CASE WHEN u.is_online THEN 'online' ELSE 'offline' END AS status,
           (
             SELECT c.id FROM public.conversations c
             JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id
             JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id
-            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = COALESCE(u.id, p.id)
+            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = u.id
             LIMIT 1
           ) AS conversation_id
-        FROM public.profiles p
-        FULL OUTER JOIN "Users" u ON u.id = p.id
-        WHERE COALESCE(u.id, p.id) != $1
-        ORDER BY COALESCE(u.full_name, p.full_name) ASC
+        FROM public."Users" u
+        WHERE u.id != $1
+        ORDER BY u.full_name ASC
         LIMIT 15
       `;
       params = [currentUserId];
@@ -251,11 +248,11 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
           'is_archived', cm2.is_archived,
           'unread_count', cm2.unread_count,
           'joined_at', cm2.joined_at,
-          'profile', (SELECT json_build_object(
-            'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
-            'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-            'initials', p.initials, 'status', p.status, 'last_seen_at', p.last_seen_at
-          ) FROM public.profiles p WHERE p.id = cm2.user_id)
+            'profile', (SELECT json_build_object(
+              'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
+              'avatar_color_bg', '#3B82F6', 'avatar_color_text', '#FFFFFF',
+              'initials', substring(p.full_name from 1 for 1), 'status', CASE WHEN p.is_online THEN 'online' ELSE 'offline' END
+            ) FROM public."Users" p WHERE p.id = cm2.user_id)
         ))
         FROM public.conversation_members cm2 
         WHERE cm2.conversation_id = c.id
@@ -327,7 +324,7 @@ export const createDM = asyncHandler(async (req, res) => {
         targetUserId = userRes.rows[0].id;
       } else {
         const profRes = await client.query(
-          `SELECT id FROM public.profiles WHERE full_name ILIKE $1 LIMIT 1`,
+          `SELECT id FROM public."Users" WHERE full_name ILIKE $1 LIMIT 1`,
           [cleanUsername]
         );
         if (profRes.rows.length > 0) {
