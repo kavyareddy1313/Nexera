@@ -1,0 +1,29 @@
+# ─── Node / OS ────────────────────────────────────────────────────────────────
+node_modules/
+dist/
+logs/
+*.log
+npm-debug.log*
+
+# ─── Environment secrets — NEVER commit these ─────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── TypeScript build output ──────────────────────────────────────────────────
+*.js.map
+*.d.ts.map
+
+# ─── OS artefacts ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editors ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Testing ──────────────────────────────────────────────────────────────────
+coverage/
+.vitest-cache/
