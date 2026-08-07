@@ -112,3 +112,7 @@
 - feat(realtime): add live streaming token buffer for low-latency AI responses
 - *Status: Verified & Integrated*
 
+### Milestone 29
+- feat(frontend-ui): implement glassmorphism design tokens and modern theme variables
+- *Status: Verified & Integrated*
+
