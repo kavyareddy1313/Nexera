@@ -188,3 +188,7 @@
 - test(auth): add unit tests for JWT verification and refresh token rotation
 - *Status: Verified & Integrated*
 
+### Milestone 48
+- perf(frontend): optimize bundle splitting and lazy loading for heavy UI routes
+- *Status: Verified & Integrated*
+
