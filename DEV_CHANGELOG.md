@@ -84,3 +84,7 @@
 - feat(auth): configure role-based access control middleware for instructor and student roles
 - *Status: Verified & Integrated*
 
+### Milestone 22
+- feat(auth): implement secure JWT refresh rotation with cross-tab sync
+- *Status: Verified & Integrated*
+
