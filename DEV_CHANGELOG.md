@@ -120,3 +120,7 @@
 - feat(frontend-ui): build reusable Modal, Drawer, and Popover overlay components
 - *Status: Verified & Integrated*
 
+### Milestone 31
+- feat(frontend-ui): implement animated Toast notifications with Framer Motion
+- *Status: Verified & Integrated*
+
