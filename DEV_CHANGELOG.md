@@ -212,3 +212,7 @@
 - docs(deployment): add production environment variables checklist and Supabase guide
 - *Status: Verified & Integrated*
 
+### Milestone 54
+- chore(deps): upgrade LangChain packages and fix peer dependency resolutions
+- *Status: Verified & Integrated*
+
