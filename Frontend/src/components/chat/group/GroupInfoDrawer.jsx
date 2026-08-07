@@ -17,7 +17,7 @@ import {
   Copy
 } from "lucide-react";
 import api from "../../../api/axios";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { useConversationStore } from "../../../store/useConversationStore";
 
 export function GroupInfoDrawer({
