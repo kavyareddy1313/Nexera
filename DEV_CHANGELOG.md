@@ -184,3 +184,7 @@
 - test(course-gen): add validation tests for course curriculum generator output
 - *Status: Verified & Integrated*
 
+### Milestone 47
+- test(auth): add unit tests for JWT verification and refresh token rotation
+- *Status: Verified & Integrated*
+
