@@ -23,3 +23,4 @@
 - [x] Development step 21 completed.
 - [x] Development step 22 completed.
 - [x] Development step 23 completed.
+- [x] Development step 24 completed.
