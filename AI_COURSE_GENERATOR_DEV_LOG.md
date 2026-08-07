@@ -9,3 +9,4 @@
 - [x] Development step 7 completed.
 - [x] Development step 8 completed.
 - [x] Development step 9 completed.
+- [x] Development step 10 completed.
