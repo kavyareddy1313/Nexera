@@ -108,3 +108,7 @@
 - feat(realtime): configure Socket.io event emitter for course generation progress updates
 - *Status: Verified & Integrated*
 
+### Milestone 28
+- feat(realtime): add live streaming token buffer for low-latency AI responses
+- *Status: Verified & Integrated*
+
