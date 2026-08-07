@@ -140,3 +140,7 @@
 - feat(frontend-ui): add syllabus preview and customizable module editor
 - *Status: Verified & Integrated*
 
+### Milestone 36
+- feat(frontend-ui): create PDF viewer toolbar with zoom, download, and fullscreen toggles
+- *Status: Verified & Integrated*
+
