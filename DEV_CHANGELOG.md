@@ -100,3 +100,7 @@
 - feat(logger): implement structured winston logger with request tracing ID injection
 - *Status: Verified & Integrated*
 
+### Milestone 26
+- feat(rate-limit): configure redis-backed rate limiters for AI and authentication endpoints
+- *Status: Verified & Integrated*
+
