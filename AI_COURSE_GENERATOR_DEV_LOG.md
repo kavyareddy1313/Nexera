@@ -2,3 +2,4 @@
 
 - [x] Development step 1 completed.
 - [x] Development step 2 completed.
+- [x] Development step 3 completed.
