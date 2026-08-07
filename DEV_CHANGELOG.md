@@ -124,3 +124,7 @@
 - feat(frontend-ui): implement animated Toast notifications with Framer Motion
 - *Status: Verified & Integrated*
 
+### Milestone 32
+- feat(frontend-ui): create interactive Flashcard carousel component with flip animations
+- *Status: Verified & Integrated*
+
