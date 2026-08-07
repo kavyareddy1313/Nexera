@@ -116,3 +116,7 @@
 - feat(frontend-ui): implement glassmorphism design tokens and modern theme variables
 - *Status: Verified & Integrated*
 
+### Milestone 30
+- feat(frontend-ui): build reusable Modal, Drawer, and Popover overlay components
+- *Status: Verified & Integrated*
+
