@@ -136,3 +136,7 @@
 - feat(frontend-ui): design course generation wizard step-by-step UI
 - *Status: Verified & Integrated*
 
+### Milestone 35
+- feat(frontend-ui): add syllabus preview and customizable module editor
+- *Status: Verified & Integrated*
+
