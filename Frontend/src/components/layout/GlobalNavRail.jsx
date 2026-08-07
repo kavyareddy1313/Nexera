@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   BookOpen,
+  Video,
   Activity,
   Settings,
   Sparkles,
@@ -20,28 +21,53 @@ export function GlobalNavRail({ activeRoute = "/chat" }) {
     { route: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { route: "/chat", label: "Messages", icon: MessageSquare },
     { route: "/courses", label: "Courses", icon: BookOpen },
-    { route: "/activity", label: "Activity", icon: Activity },
+    { 
+      route: "/live", 
+      label: "Live Classes", 
+      icon: Video, 
+      action: (e) => { 
+        e.preventDefault(); 
+        toast("Access live sessions from your courses or chat header!", { icon: "📹" }); 
+      } 
+    },
+    { 
+      route: "/activity", 
+      label: "Activity", 
+      icon: Activity, 
+      action: (e) => { 
+        e.preventDefault(); 
+        toast("Activity analytics coming soon!", { icon: "📊" }); 
+      } 
+    },
   ];
 
   return (
     <aside className="w-[72px] h-full bg-[#0F172A] text-slate-400 flex flex-col items-center py-5 z-30 shrink-0 select-none border-r border-slate-800">
-      {/* Brand Logo */}
-      <Link to="/dashboard" className="w-10 h-10 mb-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 transition-all p-1.5 group">
-        <img src={logoUrl} alt="Nexera" className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+      {/* Brand Logo with High Contrast Background */}
+      <Link
+        to="/dashboard"
+        className="w-11 h-11 mb-6 flex items-center justify-center rounded-2xl bg-white shadow-md shadow-black/25 hover:scale-105 active:scale-95 transition-all p-2 group ring-2 ring-indigo-500/20"
+        title="Nexera Home"
+      >
+        <img
+          src={logoUrl}
+          alt="Nexera"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+        />
       </Link>
 
       {/* Main Navigation Links */}
-      <nav className="flex flex-col gap-3 flex-1 w-full px-3">
-        {navItems.map(({ route, label, icon: Icon }) => {
+      <nav className="flex flex-col gap-2.5 flex-1 w-full px-3">
+        {navItems.map(({ route, label, icon: Icon, action }) => {
           const isActive = currentPath.startsWith(route);
           return (
             <div key={route} className="relative group flex justify-center">
               <Link
-                to={route === "/activity" ? "#" : route}
-                onClick={route === "/activity" ? (e) => { e.preventDefault(); toast("Activity view coming soon!", { icon: "📊" }); } : undefined}
+                to={action ? "#" : route}
+                onClick={action}
                 className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
                   isActive
-                    ? "bg-[#5840D8] text-white shadow-lg shadow-indigo-500/25"
+                    ? "bg-[#5840D8] text-white shadow-lg shadow-indigo-500/25 scale-105"
                     : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                 }`}
                 title={label}
@@ -57,10 +83,10 @@ export function GlobalNavRail({ activeRoute = "/chat" }) {
           );
         })}
 
-        {/* Nexera AI Assistant Direct Rail Trigger */}
+        {/* Nexera AI Assistant Trigger */}
         <div className="relative group flex justify-center mt-1">
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent('toggle-nexera-ai'))}
+            onClick={() => window.dispatchEvent(new CustomEvent("toggle-nexera-ai"))}
             className="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-400 hover:text-white hover:bg-indigo-600/30 transition-all shadow-xs"
             title="Nexera AI Assistant"
           >
