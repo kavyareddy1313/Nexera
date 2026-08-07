@@ -72,3 +72,7 @@
 - feat(database): define AiDocument and DocumentChunk Sequelize models with metadata indices
 - *Status: Verified & Integrated*
 
+### Milestone 19
+- feat(database): configure pgvector extension and cosine distance similarity operator
+- *Status: Verified & Integrated*
+
