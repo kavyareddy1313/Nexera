@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/db.js';
-import User from './User.js';
 
 const Course = sequelize.define('Course', {
   id: {
@@ -8,13 +7,19 @@ const Course = sequelize.define('Course', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  generationJobId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'generation_job_id',
+    comment: 'Links to the AI generation job that created this course (null for manually created)',
+  },
   title: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: false,
+    allowNull: true,
   },
   price: {
     type: DataTypes.DECIMAL(10, 2),
@@ -39,6 +44,34 @@ const Course = sequelize.define('Course', {
   },
   duration: {
     type: DataTypes.STRING,
+  },
+  level: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'beginner | intermediate | advanced',
+  },
+  language: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'English',
+  },
+  tags: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: true,
+    defaultValue: [],
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'draft',
+    validate: {
+      isIn: [['draft', 'published', 'archived']],
+    },
+  },
+  publishedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'published_at',
   },
   instructorId: {
     type: DataTypes.UUID,
