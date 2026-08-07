@@ -168,3 +168,7 @@
 - refactor(store): add local storage synchronization for user UI preferences
 - *Status: Verified & Integrated*
 
+### Milestone 43
+- test(ai-loaders): add unit tests for PDF, DOCX, and TXT document parsing
+- *Status: Verified & Integrated*
+
