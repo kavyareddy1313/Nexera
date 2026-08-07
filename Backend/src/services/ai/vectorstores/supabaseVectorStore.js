@@ -101,26 +101,32 @@ export class SupabasePgVectorStore extends BaseVectorStoreService {
   }
 
   /**
-   * Delete documents matching a filter (e.g. by fileName or userId)
-   * @param {Object} params - { fileName, userId, ids }
+   * Delete documents matching a filter (e.g. by documentId, fileName, or userId)
+   * @param {Object} params - { documentId, fileName, userId, ids }
    * @returns {Promise<boolean>}
    */
-  async deleteDocuments({ fileName, userId, ids } = {}) {
+  async deleteDocuments({ documentId, fileName, userId, ids } = {}) {
     try {
       let query = this.client.from(this.tableName).delete();
 
       if (ids && Array.isArray(ids) && ids.length > 0) {
         query = query.in('id', ids);
+      } else if (documentId && userId) {
+        query = query
+          .eq('user_id', userId)
+          .contains('metadata', { documentId });
       } else if (fileName && userId) {
         query = query
           .eq('user_id', userId)
           .contains('metadata', { fileName });
+      } else if (documentId) {
+        query = query.contains('metadata', { documentId });
       } else if (fileName) {
         query = query.contains('metadata', { fileName });
       } else if (userId) {
         query = query.eq('user_id', userId);
       } else {
-        throw new Error('Deletion requires either ids, fileName, or userId.');
+        throw new Error('Deletion requires either ids, documentId, fileName, or userId.');
       }
 
       const { error } = await query;
