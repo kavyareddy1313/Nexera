@@ -44,3 +44,4 @@
 - [x] Development step 42 completed.
 - [x] Development step 43 completed.
 - [x] Development step 44 completed.
+- [x] Development step 45 completed.
