@@ -69,3 +69,4 @@
 - [x] Development step 67 completed.
 - [x] Development step 68 completed.
 - [x] Development step 69 completed.
+- [x] Development step 70 completed.
