@@ -20,3 +20,7 @@
 - feat(ai-retriever): implement sparse BM25 keyword matching pipeline
 - *Status: Verified & Integrated*
 
+### Milestone 6
+- refactor(ai-retriever): normalize similarity score calculations across vector backends
+- *Status: Verified & Integrated*
+
