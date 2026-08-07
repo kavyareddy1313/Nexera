@@ -208,3 +208,7 @@
 - docs(api): add OpenAPI documentation for course generation orchestrator routes
 - *Status: Verified & Integrated*
 
+### Milestone 53
+- docs(deployment): add production environment variables checklist and Supabase guide
+- *Status: Verified & Integrated*
+
