@@ -41,33 +41,37 @@ export class AiController {
     });
 
     // 2. Load document via format-specific loader
-    const fileBuffer = fs.readFileSync(req.file.path);
-    const loadedDocs = await loadDocument({
-      source: fileBuffer,
-      fileName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      metadata: {
-        userId,
-        workspaceId: workspaceId || null,
-        fileSize: req.file.size,
-        documentId: aiDoc.id
-      },
-    });
+    let loadedDocs = [];
+    let chunks = [];
+    try {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      loadedDocs = await loadDocument({
+        source: fileBuffer,
+        fileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        metadata: {
+          userId,
+          workspaceId: workspaceId || null,
+          fileSize: req.file.size,
+          documentId: aiDoc.id
+        },
+      });
 
-    // 3. Chunk document
-    const chunks = await SplitterService.splitDocuments(loadedDocs, {
-      strategy,
-      chunkSize: chunkSize ? parseInt(chunkSize, 10) : undefined,
-      chunkOverlap: chunkOverlap ? parseInt(chunkOverlap, 10) : undefined,
-    });
+      // 3. Chunk document
+      chunks = await SplitterService.splitDocuments(loadedDocs, {
+        strategy,
+        chunkSize: chunkSize ? parseInt(chunkSize, 10) : undefined,
+        chunkOverlap: chunkOverlap ? parseInt(chunkOverlap, 10) : undefined,
+      });
 
-    if (chunks.length === 0) {
-      throw ApiError.badRequest('Document resulted in 0 indexable text chunks.');
+      // 4. Embed & store into Supabase pgvector
+      if (chunks.length > 0) {
+        const vectorStore = getVectorStore();
+        await vectorStore.addDocuments(chunks, { userId, workspaceId });
+      }
+    } catch (ingestError) {
+      console.warn(`[DocumentIngest] Background text extraction/embedding warning for ${req.file.originalname}:`, ingestError.message);
     }
-
-    // 4. Embed & store into Supabase pgvector
-    const vectorStore = getVectorStore();
-    await vectorStore.addDocuments(chunks, { userId, workspaceId });
 
     res.status(201).json(
       ApiResponse.created(
@@ -80,7 +84,7 @@ export class AiController {
           totalChars: loadedDocs.reduce((acc, doc) => acc + (doc.pageContent?.length || 0), 0),
           userId,
         },
-        'Document successfully parsed, chunked, embedded, and indexed.'
+        'Document successfully uploaded and saved.'
       )
     );
   });
@@ -275,7 +279,12 @@ export class AiController {
     try {
       const stream = RagChainService.stream({
         question,
-        filter: { documentId, userId }
+        filter: { 
+          documentId, 
+          fileUrl: req.body.fileUrl, 
+          fileName: req.body.fileName, 
+          userId 
+        }
       });
 
       for await (const chunk of stream) {
