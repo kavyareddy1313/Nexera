@@ -200,3 +200,7 @@
 - docs(architecture): document AI multi-provider fallback and recovery mechanisms
 - *Status: Verified & Integrated*
 
+### Milestone 51
+- docs(api): add OpenAPI documentation for AI document workspace endpoints
+- *Status: Verified & Integrated*
+
