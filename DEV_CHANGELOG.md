@@ -172,3 +172,7 @@
 - test(ai-loaders): add unit tests for PDF, DOCX, and TXT document parsing
 - *Status: Verified & Integrated*
 
+### Milestone 44
+- test(ai-retriever): add unit tests for hybrid vector and keyword fusion
+- *Status: Verified & Integrated*
+
