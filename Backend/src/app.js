@@ -55,10 +55,12 @@ createSocketServer(httpServer);
 const PORT = env.PORT;
 
 import { setupCronJobs } from './config/cron.js';
+import { autoSeedInstructorsAndCourses } from './config/autoSeed.js';
 
 httpServer.listen(PORT, async () => {
   logger.info(`🚀 Nexera Backend running on port ${PORT} [${env.NODE_ENV}]`);
   await connectDB();
+  await autoSeedInstructorsAndCourses();
   setupCronJobs();
 });
 

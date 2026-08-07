@@ -127,6 +127,18 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════════════
+// GET /api/courses/instructor/my-courses
+// Returns all courses created/published by the authenticated instructor
+// ═══════════════════════════════════════════════════════════
+router.get('/instructor/my-courses', requireAuth, asyncHandler(async (req, res) => {
+  const courses = await Course.findAll({
+    where: { instructor_id: req.user.id },
+    order: [['createdAt', 'DESC']]
+  });
+  res.json(ApiResponse.ok(courses));
+}));
+
+// ═══════════════════════════════════════════════════════════
 // GET /api/courses/:id
 // Returns course details + isEnrolled flag for current user
 // ═══════════════════════════════════════════════════════════
@@ -335,58 +347,192 @@ router.post('/verify-payment', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════════════
-// POST /api/courses/seed — Seed mock courses for development
+// POST /api/courses/seed-instructors — Create instructor accounts,
+// published courses, and community groups for development
 // ═══════════════════════════════════════════════════════════
-router.post('/seed', asyncHandler(async (req, res) => {
-  const instructor = await User.findOne();
-  if (!instructor) {
-    throw ApiError.badRequest('No users found. Please create a user first.');
-  }
+router.post('/seed-instructors', asyncHandler(async (req, res) => {
+  const pgClient = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
 
-  const mockCourses = [
-    {
-      title: "Fullstack React & Node Masterclass",
-      description: "Learn to build scalable, premium SaaS products from scratch.",
-      price: 99.99,
-      thumbnailUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80",
-      rating: 4.8,
-      studentsEnrolled: 1250,
-      category: "Development",
-      duration: "40 Hours",
-      instructor_id: instructor.id
-    },
-    {
-      title: "UI/UX Design for Developers",
-      description: "Master Tailwind CSS and Figma to create stunning user interfaces.",
-      price: 49.99,
-      thumbnailUrl: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80",
-      rating: 4.9,
-      studentsEnrolled: 890,
-      category: "Design",
-      duration: "15 Hours",
-      instructor_id: instructor.id
-    },
-    {
-      title: "Advanced System Architecture",
-      description: "Scale your applications to handle millions of users with ease.",
-      price: 149.99,
-      thumbnailUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
-      rating: 4.7,
-      studentsEnrolled: 430,
-      category: "Architecture",
-      duration: "25 Hours",
-      instructor_id: instructor.id
+  try {
+    await pgClient.connect();
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.default.hash('Nexera@123', 12);
+
+    const COLORS = [
+      { bg: '#6366f1', text: '#ffffff' },
+      { bg: '#ec4899', text: '#ffffff' },
+      { bg: '#10b981', text: '#ffffff' },
+    ];
+
+    // ── 1. Instructor Accounts ──
+    const instructors = [
+      {
+        fullName: 'Dr. Ananya Sharma', username: 'ananya.sharma', email: 'ananya@nexera.dev',
+        color: COLORS[0], initials: 'AS',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&q=80'
+      },
+      {
+        fullName: 'Prof. James Mitchell', username: 'james.mitchell', email: 'james@nexera.dev',
+        color: COLORS[1], initials: 'JM',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80'
+      },
+      {
+        fullName: 'Kavya Reddy', username: 'kavya.reddy', email: 'kavya@nexera.dev',
+        color: COLORS[2], initials: 'KR',
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&q=80'
+      },
+    ];
+
+    const createdInstructors = [];
+
+    for (const inst of instructors) {
+      // Check existing
+      const existRes = await pgClient.query(`SELECT id FROM "Users" WHERE email = $1`, [inst.email]);
+      let userId;
+
+      if (existRes.rows.length > 0) {
+        userId = existRes.rows[0].id;
+        await pgClient.query(
+          `UPDATE "Users" SET role = 'instructor', full_name = $1, username = $2, avatar_url = $3 WHERE id = $4`,
+          [inst.fullName, inst.username, inst.avatar, userId]
+        );
+      } else {
+        const uuidRes = await pgClient.query(`SELECT gen_random_uuid() as id`);
+        userId = uuidRes.rows[0].id;
+        await pgClient.query(
+          `INSERT INTO "Users" (id, full_name, username, email, password, role, avatar_url, is_online, email_verified, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, 'instructor', $6, false, true, NOW(), NOW())`,
+          [userId, inst.fullName, inst.username, inst.email, hashedPassword, inst.avatar]
+        );
+      }
+
+      // Sync auth.users
+      await pgClient.query(
+        `INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+         VALUES ($1, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $2, $3, NOW(), '{}', $4, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email`,
+        [userId, inst.email, hashedPassword, JSON.stringify({ full_name: inst.fullName })]
+      );
+
+      // Sync profiles
+      await pgClient.query(
+        `INSERT INTO public.profiles (id, full_name, avatar_url, status, initials, avatar_color_bg, avatar_color_text, created_at, updated_at)
+         VALUES ($1, $2, $3, 'online', $4, $5, $6, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE
+         SET full_name = EXCLUDED.full_name, avatar_url = EXCLUDED.avatar_url,
+             initials = EXCLUDED.initials, avatar_color_bg = EXCLUDED.avatar_color_bg,
+             avatar_color_text = EXCLUDED.avatar_color_text, updated_at = NOW()`,
+        [userId, inst.fullName, inst.avatar, inst.initials, inst.color.bg, inst.color.text]
+      );
+
+      createdInstructors.push({ ...inst, id: userId });
     }
-  ];
 
-  const createdCourses = await Course.bulkCreate(mockCourses);
+    // ── 2. Courses ──
+    const coursesData = [
+      {
+        title: 'Fullstack React & Node Masterclass',
+        description: 'Build production-grade SaaS applications from scratch using React, Node.js, PostgreSQL, and WebSockets. Master authentication, real-time features, deployment, and performance optimization.',
+        price: 4999, thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80',
+        rating: 4.8, students: 1250, category: 'Development', duration: '40 Hours', idx: 0
+      },
+      {
+        title: 'UI/UX Design for Developers',
+        description: 'Master Tailwind CSS, Figma, and modern design systems to create stunning user interfaces. Learn color theory, typography, layout principles, and responsive design patterns.',
+        price: 2999, thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80',
+        rating: 4.9, students: 890, category: 'Design', duration: '15 Hours', idx: 0
+      },
+      {
+        title: 'Advanced System Architecture',
+        description: 'Scale your applications to handle millions of users. Learn microservices, event-driven architecture, caching strategies, load balancing, and distributed systems design.',
+        price: 7999, thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80',
+        rating: 4.7, students: 430, category: 'Architecture', duration: '25 Hours', idx: 1
+      },
+      {
+        title: 'Machine Learning with Python',
+        description: 'From linear regression to deep neural networks. Master scikit-learn, TensorFlow, and PyTorch with hands-on projects in computer vision, NLP, and recommendation systems.',
+        price: 5999, thumbnail: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&q=80',
+        rating: 4.6, students: 2100, category: 'Data Science', duration: '35 Hours', idx: 1
+      },
+      {
+        title: 'DevOps & Cloud Engineering',
+        description: 'Master Docker, Kubernetes, CI/CD pipelines, AWS, and infrastructure-as-code. Deploy applications with zero downtime and monitor production systems at scale.',
+        price: 6499, thumbnail: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&q=80',
+        rating: 4.8, students: 780, category: 'Development', duration: '30 Hours', idx: 2
+      },
+      {
+        title: 'Mobile App Development with Flutter',
+        description: 'Build beautiful, natively compiled applications for iOS and Android from a single codebase. Master Dart, state management, Firebase integration, and app store deployment.',
+        price: 3999, thumbnail: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80',
+        rating: 4.9, students: 1560, category: 'Development', duration: '28 Hours', idx: 2
+      },
+    ];
 
-  // Create community groups for each seeded course
-  for (const course of createdCourses) {
-    await findOrCreateCourseGroup(course);
+    // Clean up duplicates
+    for (const c of coursesData) {
+      await pgClient.query(`DELETE FROM "Courses" WHERE title = $1`, [c.title]);
+    }
+
+    const createdCourses = [];
+
+    for (const c of coursesData) {
+      const inst = createdInstructors[c.idx];
+      const courseUUID = (await pgClient.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
+      const convoUUID = (await pgClient.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
+
+      // Create community group
+      await pgClient.query(
+        `INSERT INTO public.conversations (id, type, name, description, created_by, last_activity_at)
+         VALUES ($1, 'group', $2, $3, $4, NOW())`,
+        [convoUUID, `${c.title} Community`, `Official community group for "${c.title}". Chat, share files, and join live sessions.`, inst.id]
+      );
+
+      // Add instructor as admin
+      await pgClient.query(
+        `INSERT INTO public.conversation_members (conversation_id, user_id, role)
+         VALUES ($1, $2, 'admin')`,
+        [convoUUID, inst.id]
+      );
+
+      // Create course
+      await pgClient.query(
+        `INSERT INTO "Courses" (id, title, description, price, thumbnail_url, rating, students_enrolled, category, duration, instructor_id, conversation_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+        [courseUUID, c.title, c.description, c.price, c.thumbnail, c.rating, c.students, c.category, c.duration, inst.id, convoUUID]
+      );
+
+      // Welcome message
+      const msgUUID = (await pgClient.query(`SELECT gen_random_uuid() as id`)).rows[0].id;
+      await pgClient.query(
+        `INSERT INTO public.messages (id, conversation_id, content, type, created_at)
+         VALUES ($1, $2, $3, 'system', NOW())`,
+        [msgUUID, convoUUID, `📚 Welcome to "${c.title}" Community! Created by ${inst.fullName}. Enrolled students will be added here automatically.`]
+      );
+      await pgClient.query(
+        `UPDATE public.conversations SET last_message_id = $1, last_activity_at = NOW() WHERE id = $2`,
+        [msgUUID, convoUUID]
+      );
+
+      createdCourses.push({ title: c.title, price: c.price, instructor: inst.fullName });
+    }
+
+    res.json(ApiResponse.ok({
+      message: '🚀 Instructors & courses seeded successfully!',
+      instructors: createdInstructors.map(i => ({
+        email: i.email,
+        fullName: i.fullName,
+        password: 'Nexera@123',
+        role: 'instructor'
+      })),
+      courses: createdCourses,
+      note: 'Each course has an auto-created community group in /chat. Students who enroll via payment will join the group automatically.'
+    }));
+  } finally {
+    try { await pgClient.end(); } catch (_) {}
   }
-
-  res.json(ApiResponse.ok({ message: 'Seeded successfully with community groups' }));
 }));
 
 // ═══════════════════════════════════════════════════════════
