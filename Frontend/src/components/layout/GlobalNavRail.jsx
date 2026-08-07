@@ -56,6 +56,20 @@ export function GlobalNavRail({ activeRoute = "/chat" }) {
             </div>
           );
         })}
+
+        {/* Nexera AI Assistant Direct Rail Trigger */}
+        <div className="relative group flex justify-center mt-1">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('toggle-nexera-ai'))}
+            className="w-11 h-11 rounded-xl flex items-center justify-center text-indigo-400 hover:text-white hover:bg-indigo-600/30 transition-all shadow-xs"
+            title="Nexera AI Assistant"
+          >
+            <Sparkles size={20} strokeWidth={2.2} />
+          </button>
+          <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl border border-slate-800">
+            Nexera AI
+          </div>
+        </div>
       </nav>
 
       {/* Bottom Actions */}
