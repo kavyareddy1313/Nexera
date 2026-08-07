@@ -95,7 +95,13 @@ export function MessageList({
   }, [messages, unreadCount]);
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-[#F8FAFC]">
+    <div 
+      className="relative flex-1 overflow-hidden bg-[#FAFAFC]"
+      style={{
+        backgroundImage: "radial-gradient(#CBD5E1 1.2px, transparent 1.2px)",
+        backgroundSize: "22px 22px",
+      }}
+    >
       {messages.length === 0 && !isFetchingNextPage && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 z-10">
           <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-indigo-600 mb-3">
