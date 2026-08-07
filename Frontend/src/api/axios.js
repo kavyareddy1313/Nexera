@@ -29,12 +29,16 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, {
-          withCredentials: true
-        });
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        const response = await axios.post(
+          `${api.defaults.baseURL}/auth/refresh`, 
+          { refreshToken: storedRefreshToken }, 
+          { withCredentials: true }
+        );
 
-        const { accessToken } = response.data.data;
+        const { accessToken, refreshToken } = response.data.data;
         localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
