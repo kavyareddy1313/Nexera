@@ -76,3 +76,7 @@
 - feat(database): configure pgvector extension and cosine distance similarity operator
 - *Status: Verified & Integrated*
 
+### Milestone 20
+- feat(database): define CourseModule, CourseLesson, and CourseQuiz relational schemas
+- *Status: Verified & Integrated*
+
