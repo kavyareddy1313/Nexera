@@ -32,6 +32,17 @@ export const connectDB = async () => {
       } catch (syncErr) {
         logger.warn(`⚠️ Database Schema Sync warning: ${syncErr.message}`);
       }
+
+      // Manual migrations (must run even if sync throws enum warnings)
+      try {
+        await sequelize.query(`
+          ALTER TABLE course_generation_jobs 
+          ADD COLUMN IF NOT EXISTS intermediate_state JSONB DEFAULT '{"lessonsData": {}, "quizzesData": {}, "resourcesData": {}}'::jsonb;
+        `);
+        logger.info('✅ Manual Migrations: Applied');
+      } catch (migErr) {
+        logger.error(`❌ Manual Migration Failed: ${migErr.message}`);
+      }
     }
   } catch (error) {
     logger.error(`❌ Database Connection: Failed | Error: ${error.message}`);
