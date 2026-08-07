@@ -32,33 +32,73 @@ export default function AiWorkspaceViewer() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  const fetchStreamWithAuth = async (url, options = {}) => {
+    let token = localStorage.getItem('accessToken');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...options.headers,
+    };
+
+    let response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+      try {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        const refreshRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ refreshToken: storedRefreshToken }),
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData?.data?.accessToken;
+          const newRefreshToken = refreshData?.data?.refreshToken;
+          if (newToken) {
+            localStorage.setItem('accessToken', newToken);
+            if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+            headers['Authorization'] = `Bearer ${newToken}`;
+            response = await fetch(url, { ...options, headers });
+          }
+        }
+      } catch (err) {
+        console.error('Refresh token failed:', err);
+      }
+    }
+
+    return response;
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
     const userMsg = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }, { role: 'assistant', content: '' }]);
     setIsTyping(true);
 
     try {
-      // Create a temporary message for streaming
-      setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/ai/chat/stream`, {
+      const response = await fetchStreamWithAuth(`${import.meta.env.VITE_API_URL}/ai/chat/stream`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: JSON.stringify({
           question: userMsg,
-          filter: { documentId: id }
+          filter: { 
+            documentId: id,
+            fileUrl: document?.fileUrl,
+            fileName: document?.filename,
+          }
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
+      let streamedContent = '';
 
       while (true) {
         const { value, done } = await reader.read();
@@ -75,21 +115,32 @@ export default function AiWorkspaceViewer() {
             try {
               const data = JSON.parse(dataStr);
               if (data.type === 'token') {
+                const tokenText = data.data ?? data.content ?? data.token ?? '';
+                streamedContent += tokenText;
                 setMessages(prev => {
-                  const newMsgs = [...prev];
-                  newMsgs[newMsgs.length - 1].content += data.content;
-                  return newMsgs;
+                  const updated = [...prev];
+                  if (updated.length > 0) {
+                    updated[updated.length - 1] = { role: 'assistant', content: streamedContent };
+                  }
+                  return updated;
                 });
+              } else if (data.type === 'error') {
+                toast.error(data.message || 'Generation error');
               }
-            } catch (e) {
-              // ignore parse errors for partial chunks
-            }
+            } catch (e) {}
           }
         }
       }
     } catch (error) {
       toast.error('Failed to get response');
     } finally {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'assistant' && !last.content.trim()) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
       setIsTyping(false);
     }
   };
@@ -99,20 +150,23 @@ export default function AiWorkspaceViewer() {
     setMessages(prev => [...prev, { role: 'user', content: `Please ${actionStr.replace('_', ' ')}` }, { role: 'assistant', content: '' }]);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/ai/document/action`, {
+      const response = await fetchStreamWithAuth(`${import.meta.env.VITE_API_URL}/ai/document/action`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: JSON.stringify({
           documentId: id,
+          fileUrl: document?.fileUrl,
+          fileName: document?.filename,
           action: actionStr
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
+      let streamedContent = '';
 
       while (true) {
         const { value, done } = await reader.read();
@@ -129,11 +183,17 @@ export default function AiWorkspaceViewer() {
             try {
               const data = JSON.parse(dataStr);
               if (data.type === 'token') {
+                const tokenText = data.data ?? data.content ?? data.token ?? '';
+                streamedContent += tokenText;
                 setMessages(prev => {
-                  const newMsgs = [...prev];
-                  newMsgs[newMsgs.length - 1].content += data.content;
-                  return newMsgs;
+                  const updated = [...prev];
+                  if (updated.length > 0) {
+                    updated[updated.length - 1] = { role: 'assistant', content: streamedContent };
+                  }
+                  return updated;
                 });
+              } else if (data.type === 'error') {
+                toast.error(data.message || 'Generation error');
               }
             } catch (e) {}
           }
@@ -142,14 +202,22 @@ export default function AiWorkspaceViewer() {
     } catch (error) {
       toast.error('Failed to execute action');
     } finally {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'assistant' && !last.content.trim()) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
       setIsTyping(false);
     }
   };
 
   if (!document) return null;
 
-  const fileUrl = `${import.meta.env.VITE_API_URL}${document.fileUrl}`;
-  const isPdf = document.filename.toLowerCase().endsWith('.pdf');
+  const baseUrl = (import.meta.env.VITE_API_URL || '').replace('/api/v1', '');
+  const fileUrl = document.fileUrl?.startsWith('http') ? document.fileUrl : `${baseUrl}${document.fileUrl}`;
+  const isPdf = document.filename?.toLowerCase().endsWith('.pdf');
 
   return (
     <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-[#0b1120]">
