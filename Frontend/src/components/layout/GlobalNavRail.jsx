@@ -1,94 +1,81 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   MessageSquare,
   BookOpen,
   Activity,
   Settings,
-  Plus,
+  Sparkles,
+  User,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import logoUrl from "../../assets/logo.png";
 
 export function GlobalNavRail({ activeRoute = "/chat" }) {
+  const location = useLocation();
+  const currentPath = location.pathname || activeRoute;
+
   const navItems = [
-    { route: "/dashboard", icon: LayoutDashboard },
-    { route: "/chat", icon: MessageSquare },
-    { route: "/courses", icon: BookOpen },
-    { route: "/activity", icon: Activity },
+    { route: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { route: "/chat", label: "Messages", icon: MessageSquare },
+    { route: "/courses", label: "Courses", icon: BookOpen },
+    { route: "/activity", label: "Activity", icon: Activity },
   ];
 
   return (
-    <div className="w-[72px] h-full bg-[#f3f4f6] flex flex-col items-center py-4 z-20 shrink-0">
-      <div className="w-10 h-10 mb-8 flex items-center justify-center">
-        <img src={logoUrl} alt="Nexera Logo" className="w-full h-full object-contain" />
-      </div>
+    <aside className="w-[72px] h-full bg-[#0F172A] text-slate-400 flex flex-col items-center py-5 z-30 shrink-0 select-none border-r border-slate-800">
+      {/* Brand Logo */}
+      <Link to="/dashboard" className="w-10 h-10 mb-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 transition-all p-1.5 group">
+        <img src={logoUrl} alt="Nexera" className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+      </Link>
 
-      <div className="flex flex-col gap-6 flex-1">
-        {navItems.map(({ route, icon: Icon }) => {
-          const isActive = activeRoute === route;
+      {/* Main Navigation Links */}
+      <nav className="flex flex-col gap-3 flex-1 w-full px-3">
+        {navItems.map(({ route, label, icon: Icon }) => {
+          const isActive = currentPath.startsWith(route);
           return (
-            <div key={route} className="relative p-2 flex justify-center">
-              {isActive && (
-                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full"></div>
-              )}
-              {route === "/dashboard" || route === "/chat" || route === "/courses" ? (
-                <Link to={route}>
-                  <button
-                    className={`transition-colors flex items-center justify-center ${
-                      isActive
-                        ? "text-indigo-600"
-                        : "text-gray-400 hover:text-indigo-600"
-                    }`}
-                  >
-                    <Icon
-                      size={22}
-                      strokeWidth={2.5}
-                      fill={isActive && route === "/chat" ? "currentColor" : "none"}
-                    />
-                  </button>
-                </Link>
-              ) : (
-                <button
-                  onClick={() => toast(`Navigating to ${route}... (Coming soon)`, { icon: '🚀' })}
-                  className={`transition-colors flex items-center justify-center ${
-                    isActive
-                      ? "text-indigo-600"
-                      : "text-gray-400 hover:text-indigo-600"
-                  }`}
-                >
-                  <Icon
-                    size={22}
-                    strokeWidth={2.5}
-                    fill={isActive && route === "/chat" ? "currentColor" : "none"}
-                  />
-                </button>
-              )}
+            <div key={route} className="relative group flex justify-center">
+              <Link
+                to={route === "/activity" ? "#" : route}
+                onClick={route === "/activity" ? (e) => { e.preventDefault(); toast("Activity view coming soon!", { icon: "📊" }); } : undefined}
+                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                  isActive
+                    ? "bg-[#5840D8] text-white shadow-lg shadow-indigo-500/25"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                }`}
+                title={label}
+              >
+                <Icon size={20} strokeWidth={isActive ? 2.4 : 2} />
+              </Link>
+
+              {/* Tooltip on hover */}
+              <div className="absolute left-[68px] top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-medium rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl border border-slate-800">
+                {label}
+              </div>
             </div>
           );
         })}
+      </nav>
 
-        <div className="relative p-2 mt-auto mb-4 flex justify-center">
-          <button
-            onClick={() => toast('Opening Settings... (Coming soon)', { icon: '⚙️' })}
-            className={`transition-colors flex items-center justify-center ${
-              activeRoute === "/settings"
-                ? "text-indigo-600"
-                : "text-gray-400 hover:text-indigo-600"
-            }`}
-          >
-            <Settings size={22} strokeWidth={2.5} />
-          </button>
-        </div>
+      {/* Bottom Actions */}
+      <div className="flex flex-col gap-3 items-center w-full px-3 pt-4 border-t border-slate-800/80">
+        <button
+          onClick={() => toast("Settings coming soon!", { icon: "⚙️" })}
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all"
+          title="Settings"
+        >
+          <Settings size={20} strokeWidth={2} />
+        </button>
+
+        <Link
+          to="/dashboard"
+          className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-xs shadow-md hover:ring-2 hover:ring-indigo-400 transition-all"
+          title="My Profile"
+        >
+          <User size={18} />
+        </Link>
       </div>
-
-      <button 
-        onClick={() => toast('Creating new item...', { icon: '✨' })}
-        className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all"
-      >
-        <Plus size={20} strokeWidth={3} />
-      </button>
-    </div>
+    </aside>
   );
 }

@@ -187,28 +187,34 @@ export function Sidebar() {
   return (
     <div className="flex flex-col h-full w-full bg-transparent px-4 pt-5 pb-2">
       {/* Top Header */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-          Messages
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <span>Messages</span>
+          {allConvos.length > 0 && (
+            <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200/80 text-slate-600 rounded-full">
+              {allConvos.length}
+            </span>
+          )}
         </h2>
         <div className="flex items-center gap-1.5">
           {/* Add Contact / Search Username Button */}
           <button
             onClick={() => openAddContactModal("")}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#5840D8] hover:bg-[#4830c0] text-white rounded-xl transition-all font-semibold text-xs shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200/80 rounded-xl transition-all font-semibold text-xs shadow-xs hover:shadow-sm active:scale-95"
             title="Search by @username or add new friend"
           >
-            <UserPlus size={15} strokeWidth={2.4} />
+            <UserPlus size={14} strokeWidth={2.4} />
             <span>Add Friend</span>
           </button>
 
           {/* New Group Button */}
           <button
             onClick={() => setIsNewGroupOpen(true)}
-            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
+            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 rounded-xl transition-all"
             title="Create New Group"
           >
-            <Users size={19} strokeWidth={2.2} />
+            <Users size={18} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -218,14 +224,14 @@ export function Sidebar() {
       {activeTab === "chats" && (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Search Bar */}
-          <div className="my-2.5 relative">
+          <div className="my-2 relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search size={16} className="text-slate-400" />
+              <Search size={15} className="text-slate-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-10 py-2.5 border border-slate-300/90 rounded-2xl bg-white text-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs"
-              placeholder="Search conversations or username..."
+              className="block w-full pl-9 pr-9 py-2 border border-slate-200 rounded-xl bg-white text-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 focus:border-indigo-500 transition-all shadow-xs"
+              placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -235,9 +241,9 @@ export function Sidebar() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
               >
-                <X size={15} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -246,47 +252,46 @@ export function Sidebar() {
           {searchQuery.trim() && (
             <button
               onClick={() => openAddContactModal(searchQuery)}
-              className="w-full mb-2.5 px-3 py-2.5 bg-indigo-100/90 hover:bg-indigo-200/90 border border-indigo-200 rounded-2xl text-left flex items-center justify-between transition-all group shadow-xs"
+              className="w-full mb-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200/80 rounded-xl text-left flex items-center justify-between transition-all group shadow-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-[#5840D8] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-                  <UserPlus size={13} strokeWidth={2.5} />
+                <div className="w-5 h-5 rounded-md bg-[#5840D8] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <UserPlus size={12} strokeWidth={2.5} />
                 </div>
                 <span className="text-xs font-semibold text-indigo-950 truncate">
-                  Search all Nexera users for <span className="text-[#5840D8] font-bold">"{searchQuery}"</span>
+                  Find on Nexera: <span className="text-[#5840D8] font-bold">"{searchQuery}"</span>
                 </span>
               </div>
-              <ArrowRight size={14} className="text-indigo-600 group-hover:translate-x-0.5 transition-transform flex-shrink-0 ml-1" />
+              <ArrowRight size={13} className="text-indigo-600 group-hover:translate-x-0.5 transition-transform flex-shrink-0 ml-1" />
             </button>
           )}
-
           {/* Empty States */}
           {flatItems.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white rounded-3xl border border-dashed border-slate-300 my-2 shadow-xs">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#5840D8] mb-3 shadow-inner">
-                <UserPlus size={26} strokeWidth={2.2} />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white rounded-2xl border border-dashed border-slate-200 my-2 shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#5840D8] mb-3">
+                <UserPlus size={22} strokeWidth={2.2} />
               </div>
               <h3 className="text-sm font-bold text-slate-900 mb-1">
                 {searchQuery ? "No chats found" : "No conversations yet"}
               </h3>
-              <p className="text-xs text-slate-500 max-w-[240px] mb-4 leading-relaxed">
+              <p className="text-xs text-slate-500 max-w-[220px] mb-3 leading-relaxed">
                 {searchQuery
                   ? `No active conversation matches "${searchQuery}". Connect with them to start chatting!`
-                  : "Connect with friends and teammates by searching their @username to start messaging!"}
+                  : "Find teammates by searching their @username to start messaging!"}
               </p>
               <button
                 onClick={() => openAddContactModal(searchQuery)}
-                className="px-4 py-2.5 bg-[#5840D8] hover:bg-[#4830c0] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-95"
+                className="px-3.5 py-2 bg-[#5840D8] hover:bg-[#4830c0] text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5"
               >
-                <UserPlus size={15} />
-                <span>{searchQuery ? `Search for "${searchQuery}"` : "Find & Connect Friends"}</span>
+                <UserPlus size={14} />
+                <span>{searchQuery ? `Search for "${searchQuery}"` : "Find Friends"}</span>
               </button>
             </div>
           ) : (
             /* Virtualized Conversation List */
             <div
               ref={parentRef}
-              className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scrollbar pr-0.5 space-y-1"
+              className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scrollbar pr-0.5"
             >
               <div
                 style={{
@@ -303,7 +308,7 @@ export function Sidebar() {
                     return (
                       <div
                         key={virtualRow.index}
-                        className="absolute top-0 left-0 w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-200/70 rounded-xl transition-colors border-b border-slate-300/80"
+                        className="absolute top-0 left-0 w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-200/70 rounded-xl transition-colors border-b border-slate-200"
                         style={{
                           height: `${virtualRow.size}px`,
                           transform: `translateY(${virtualRow.start}px)`,
@@ -330,11 +335,11 @@ export function Sidebar() {
                     <div
                       key={virtualRow.index}
                       className={cn(
-                        "absolute w-full flex items-center px-3.5 py-3 cursor-pointer transition-all group rounded-2xl border",
+                        "absolute w-full flex items-center px-3.5 py-3 cursor-pointer transition-all group rounded-xl border",
                         isActive
-                          ? "bg-[#5840D8] text-white border-transparent shadow-lg ring-2 ring-indigo-500/30"
-                          : "bg-white hover:bg-slate-50/90 border-slate-200/90 hover:border-slate-300 shadow-xs",
-                        isPinned && !isActive && "bg-indigo-50/60 border-indigo-200/80",
+                          ? "bg-indigo-50/90 border-indigo-200/90 shadow-xs ring-1 ring-indigo-500/15"
+                          : "bg-white hover:bg-slate-50/90 border-slate-200/70 hover:border-slate-300 shadow-xs",
+                        isPinned && !isActive && "bg-slate-50/60 border-slate-200/80",
                       )}
                       style={{
                         height: `${virtualRow.size - 6}px`,
@@ -343,38 +348,37 @@ export function Sidebar() {
                       onClick={() => handleItemClick(item)}
                       onContextMenu={(e) => handleContextMenu(e, convo.id)}
                     >
+                      {/* Active Indicator Bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-3 bottom-3 w-1 bg-[#5840D8] rounded-r-full" />
+                      )}
+
                       {/* Avatar */}
                       <div className="relative flex-shrink-0 mr-3">
                         {convo.avatarUrl ? (
                           <img
                             src={convo.avatarUrl}
                             alt={convo.displayName}
-                            className="w-12 h-12 rounded-full object-cover shadow-xs"
+                            className="w-11 h-11 rounded-full object-cover shadow-xs border border-slate-100"
                           />
                         ) : (
                           <div
-                            className={cn(
-                              "w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm shadow-xs",
-                              isActive ? "bg-white/20 text-white ring-1 ring-white/30" : "text-white"
-                            )}
-                            style={!isActive ? {
+                            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-xs text-white"
+                            style={{
                               backgroundColor: convo.avatarColorBg || "#5840D8",
                               color: convo.avatarColorText || "#fff",
-                            } : {}}
+                            }}
                           >
                             {convo.initials ||
                               (convo.type === "group" ? (
-                                <Users size={20} />
+                                <Users size={18} />
                               ) : (
                                 getInitials(convo.displayName)
                               ))}
                           </div>
                         )}
                         {convo.otherUserOnline && (
-                          <div className={cn(
-                            "absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 rounded-full shadow-xs",
-                            isActive ? "border-[#5840D8]" : "border-white"
-                          )}></div>
+                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-xs"></div>
                         )}
                       </div>
 
@@ -382,14 +386,14 @@ export function Sidebar() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-1">
                           <h3 className={cn(
-                            "text-sm truncate pr-2",
-                            isActive ? "font-black text-white" : "font-bold text-slate-900"
+                            "text-sm truncate pr-2 font-semibold",
+                            isActive ? "text-slate-950 font-bold" : "text-slate-900"
                           )}>
                             {convo.displayName}
                           </h3>
                           <span className={cn(
-                            "text-[11px] whitespace-nowrap",
-                            isActive ? "font-semibold text-indigo-100" : "font-semibold text-slate-400"
+                            "text-[11px] whitespace-nowrap font-medium",
+                            isActive ? "text-indigo-600 font-semibold" : "text-slate-400"
                           )}>
                             {formatTime(convo.last_message_at)}
                           </span>
@@ -397,7 +401,7 @@ export function Sidebar() {
                         <div className="flex justify-between items-center">
                           <p className={cn(
                             "text-xs truncate pr-2 flex items-center gap-1 font-medium",
-                            isActive ? "text-indigo-100" : "text-slate-500"
+                            isActive ? "text-slate-700 font-medium" : "text-slate-500"
                           )}>
                             {convo.last_message?.startsWith("http") ? (
                               <>
@@ -405,7 +409,7 @@ export function Sidebar() {
                               </>
                             ) : (
                               convo.last_message || (
-                                <span className={isActive ? "italic text-indigo-200" : "italic text-slate-400"}>
+                                <span className="italic text-slate-400">
                                   No messages yet
                                 </span>
                               )
@@ -413,16 +417,13 @@ export function Sidebar() {
                           </p>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             {isMuted && (
-                              <BellOff size={13} className={isActive ? "text-indigo-200" : "text-slate-400"} />
+                              <BellOff size={13} className="text-slate-400" />
                             )}
                             {isPinned && (
-                              <Pin size={13} className={isActive ? "text-indigo-200" : "text-slate-400"} />
+                              <Pin size={13} className="text-slate-400" />
                             )}
                             {!!convo.unreadCount && convo.unreadCount > 0 && (
-                              <div className={cn(
-                                "text-[11px] font-bold min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full shadow-xs",
-                                isActive ? "bg-white text-[#5840D8]" : "bg-[#5840D8] text-white"
-                              )}>
+                              <div className="text-[11px] font-bold min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full shadow-xs bg-[#5840D8] text-white">
                                 {convo.unreadCount > 99
                                   ? "99+"
                                   : convo.unreadCount}

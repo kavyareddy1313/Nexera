@@ -12,19 +12,18 @@ export function ActiveConversation() {
 
   if (!activeConvo) {
     return (
-      <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50 border-l border-gray-200">
-        <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6 text-indigo-500">
-          <MessageSquare size={40} strokeWidth={1.5} />
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#FAFAFA] text-center p-8 select-none">
+        <div className="w-16 h-16 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-center mb-4 text-[#5840D8]">
+          <MessageSquare size={28} strokeWidth={2} />
         </div>
-        <h2 className="text-2xl font-light text-gray-800 mb-2">Nexera Web</h2>
-        <p className="text-gray-500">
-          Select a conversation to start messaging.
+        <h2 className="text-lg font-bold text-slate-800 mb-1">Nexera Messenger</h2>
+        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+          Select a conversation from the left to start messaging, or search for a colleague by their @username.
         </p>
       </div>
     );
   }
 
-  // Render our new complex MessageThreadView
   return (
     <div className="flex-1 flex flex-col h-full bg-transparent relative">
       <MessageThreadView />

@@ -5,14 +5,13 @@ import { useConversationStore } from "../store/useConversationStore";
 import useChatStore from "../store/useChatStore";
 import api from "../api/axios";
 import { cn } from "../lib/utils";
-import { LayoutDashboard, MessageSquare, Briefcase, Activity, Settings, Plus } from "lucide-react";
 import { GlobalNavRail } from "../components/layout/GlobalNavRail";
 
 export default function ChatShell() {
   const { activeConversationId, setConversations } = useConversationStore();
   const { initSocket, disconnectSocket } = useChatStore();
 
-  // Initialize socket
+  // Initialize socket connection
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -21,7 +20,7 @@ export default function ChatShell() {
     return () => disconnectSocket();
   }, [initSocket, disconnectSocket]);
 
-  // Fetch conversations directly from the new nested endpoint
+  // Fetch conversations and contacts
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -37,30 +36,32 @@ export default function ChatShell() {
   }, [setConversations]);
 
   return (
-    <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100 via-fuchsia-50 to-blue-50 overflow-hidden font-sans">
+    <div className="flex h-screen w-screen bg-slate-950 overflow-hidden font-sans antialiased select-none">
+      {/* 1. Global Navigation Rail */}
       <GlobalNavRail activeRoute="/chat" />
 
-      <div className="flex flex-1 h-[calc(100vh-2rem)] my-4 mr-4 rounded-[2rem] overflow-hidden shadow-2xl border border-gray-300/80 bg-white">
-        {/* Left Panel (Users / Conversations List) - Rich Distinct Slate-Tinted Background */}
-        <div
+      {/* 2. Workspace Body */}
+      <main className="flex flex-1 h-full overflow-hidden bg-white">
+        {/* Left Panel: Conversation List / Contacts */}
+        <section
           className={cn(
             activeConversationId ? "hidden md:flex" : "flex",
-            "w-full md:w-[380px] lg:w-[410px] flex-shrink-0 h-full relative z-10 bg-[#EAEEF6] border-r border-[#CBD5E1] shadow-[4px_0_24px_rgba(0,0,0,0.06)]",
+            "w-full md:w-[360px] lg:w-[390px] flex-shrink-0 h-full relative z-10 bg-[#F8FAFC] border-r border-slate-200/90 flex-col",
           )}
         >
           <Sidebar />
-        </div>
+        </section>
 
-        {/* Right Panel (Chatting Area) - Crisp Pure White Canvas */}
-        <div
+        {/* Right Panel: Active Chat Thread Canvas */}
+        <section
           className={cn(
             !activeConversationId ? "hidden md:flex" : "flex",
-            "flex-1 h-full relative bg-white",
+            "flex-1 h-full relative bg-white flex flex-col min-w-0",
           )}
         >
           <ActiveConversation />
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

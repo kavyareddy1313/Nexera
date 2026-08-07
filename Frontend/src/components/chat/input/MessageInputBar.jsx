@@ -73,7 +73,7 @@ export function MessageInputBar({
   };
 
   return (
-    <div className="flex flex-col w-full bg-white border-t border-gray-200/80 z-20 shadow-xs">
+    <div className="flex flex-col w-full bg-white border-t border-slate-200/80 z-20">
       {/* 1. Reply / Edit Banner */}
       {(inputState === "REPLY" || inputState === "EDIT") && (
         <ReplyBanner
@@ -104,8 +104,8 @@ export function MessageInputBar({
       {(inputState === "TEXT" ||
         inputState === "REPLY" ||
         inputState === "EDIT") && (
-        <div className="pb-4 pt-3 w-full max-w-4xl mx-auto px-6 flex flex-col items-center">
-          <div className="w-full bg-[#F3F5FA] rounded-[2rem] border border-gray-200/90 focus-within:border-indigo-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100 p-1 flex items-center transition-all shadow-xs">
+        <div className="py-3 px-4 sm:px-6 w-full max-w-4xl mx-auto flex flex-col items-center">
+          <div className="w-full bg-[#F8FAFC] rounded-2xl border border-slate-200/90 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 px-3 py-1.5 flex items-center transition-all shadow-xs">
             <TextInput
               initialContent={
                 inputState === "EDIT" && editMessage?.type === "TEXT"
@@ -119,7 +119,6 @@ export function MessageInputBar({
               isEditMode={inputState === "EDIT"}
             />
           </div>
-          <p className="text-[10px] font-bold tracking-[0.2em] text-gray-400 mt-2.5 uppercase">PRESS SHIFT + ENTER TO SEND</p>
         </div>
       )}
 
