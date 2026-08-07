@@ -12,3 +12,7 @@
 - perf(ai-engine): implement memory caching for frequently queried embeddings
 - *Status: Verified & Integrated*
 
+### Milestone 4
+- feat(ai-retriever): add Reciprocal Rank Fusion (RRF) for hybrid document search
+- *Status: Verified & Integrated*
+
