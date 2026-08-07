@@ -28,3 +28,7 @@
 - feat(ai-llm): introduce LlmFactory provider registry and dynamic model dispatching
 - *Status: Verified & Integrated*
 
+### Milestone 8
+- feat(ai-llm): add exponential backoff retry handler for rate-limited API requests
+- *Status: Verified & Integrated*
+
