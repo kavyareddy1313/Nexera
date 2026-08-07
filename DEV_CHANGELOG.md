@@ -52,3 +52,7 @@
 - feat(course-generator): implement multi-phase orchestrator for automated curriculum building
 - *Status: Verified & Integrated*
 
+### Milestone 14
+- feat(course-generator): implement lesson outline generation with learning objectives
+- *Status: Verified & Integrated*
+
