@@ -10,8 +10,17 @@ import Course from './Course.js';
 import CourseEnrollment from './CourseEnrollment.js';
 import RefreshToken from './RefreshToken.js';
 import PasswordResetToken from './PasswordResetToken.js';
+import AiDocument from './AiDocument.js';
+import CourseGenerationJob from './CourseGenerationJob.js';
+import CourseModule from './CourseModule.js';
+import CourseLesson from './CourseLesson.js';
+import CourseQuiz from './CourseQuiz.js';
 
 // --- Associations ---
+
+// User <-> AiDocument
+User.hasMany(AiDocument, { foreignKey: 'user_id', as: 'ai_documents' });
+AiDocument.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Conversation <-> User (Creator)
 User.hasMany(Conversation, { foreignKey: 'created_by', as: 'created_conversations' });
@@ -79,6 +88,28 @@ RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(PasswordResetToken, { foreignKey: 'user_id' });
 PasswordResetToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+// --- AI Course Generator Associations ---
+
+// CourseGenerationJob <-> User (Instructor)
+User.hasMany(CourseGenerationJob, { foreignKey: 'instructor_id', as: 'generation_jobs' });
+CourseGenerationJob.belongsTo(User, { foreignKey: 'instructor_id', as: 'instructor' });
+
+// CourseGenerationJob <-> Course (one-to-one: job produces one course)
+CourseGenerationJob.hasOne(Course, { foreignKey: 'generation_job_id', as: 'course' });
+Course.belongsTo(CourseGenerationJob, { foreignKey: 'generation_job_id', as: 'generation_job' });
+
+// Course <-> CourseModule
+Course.hasMany(CourseModule, { foreignKey: 'course_id', as: 'modules', onDelete: 'CASCADE' });
+CourseModule.belongsTo(Course, { foreignKey: 'course_id', as: 'course' });
+
+// CourseModule <-> CourseLesson
+CourseModule.hasMany(CourseLesson, { foreignKey: 'module_id', as: 'lessons', onDelete: 'CASCADE' });
+CourseLesson.belongsTo(CourseModule, { foreignKey: 'module_id', as: 'module' });
+
+// CourseLesson <-> CourseQuiz
+CourseLesson.hasMany(CourseQuiz, { foreignKey: 'lesson_id', as: 'quizzes', onDelete: 'CASCADE' });
+CourseQuiz.belongsTo(CourseLesson, { foreignKey: 'lesson_id', as: 'lesson' });
+
 export {
   User,
   Conversation,
@@ -91,5 +122,10 @@ export {
   Course,
   CourseEnrollment,
   RefreshToken,
-  PasswordResetToken
+  PasswordResetToken,
+  AiDocument,
+  CourseGenerationJob,
+  CourseModule,
+  CourseLesson,
+  CourseQuiz
 };

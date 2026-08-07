@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { 
   getConversations, 
+  searchUsers,
   createDM, 
   createGroup, 
   getConversationDetails,
@@ -46,6 +47,11 @@ const router = Router();
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
+
+// =======================
+// USERS & SEARCH
+// =======================
+router.get('/users/search', searchUsers);
 
 // =======================
 // CONVERSATIONS

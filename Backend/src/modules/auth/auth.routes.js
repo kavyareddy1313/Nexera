@@ -25,7 +25,7 @@ const generateTokens = (user) => {
   const accessToken = jwt.sign(
     { id: user.id, email: user.email, role: user.role }, 
     env.JWT_SECRET, 
-    { expiresIn: '15m' }
+    { expiresIn: '7d' }
   );
   
   const refreshString = crypto.randomBytes(40).toString('hex');
@@ -37,7 +37,7 @@ const generateTokens = (user) => {
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  sameSite: 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 
@@ -95,7 +95,9 @@ router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
   } catch (err) {
     console.error('Failed to sync profile on register:', err.message);
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch (_) {}
   }
 
   res.status(201).json(ApiResponse.created({ userId: user.id }, 'Account created'));
@@ -125,6 +127,7 @@ router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
 
   res.json(ApiResponse.ok({
     accessToken,
+    refreshToken: refreshString,
     user: {
       id: user.id,
       email: user.email,
@@ -137,7 +140,7 @@ router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
 }));
 
 router.post('/refresh', asyncHandler(async (req, res) => {
-  const refreshString = req.cookies.refreshToken;
+  const refreshString = req.body.refreshToken || req.cookies.refreshToken;
   if (!refreshString) throw ApiError.unauthorized('Refresh token required');
 
   const tokenHash = crypto.createHash('sha256').update(refreshString).digest('hex');
@@ -169,7 +172,10 @@ router.post('/refresh', asyncHandler(async (req, res) => {
   });
 
   res.cookie('refreshToken', newTokens.refreshString, COOKIE_OPTIONS);
-  res.json(ApiResponse.ok({ accessToken: newTokens.accessToken }));
+  res.json(ApiResponse.ok({ 
+    accessToken: newTokens.accessToken,
+    refreshToken: newTokens.refreshString 
+  }));
 }));
 
 router.post('/logout', authMiddleware, asyncHandler(async (req, res) => {

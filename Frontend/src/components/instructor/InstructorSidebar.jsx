@@ -11,7 +11,8 @@ import {
   Banknote,
   Award,
   Bell,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -23,6 +24,7 @@ export function InstructorSidebar() {
     { name: 'Overview', icon: LayoutDashboard, path: '/instructor/dashboard' },
     { name: 'Instructor Chat', icon: MessageSquare, path: '/instructor/messages' },
     { name: 'My Courses', icon: BookOpen, path: '/instructor/courses' },
+    { name: 'AI Generator', icon: Sparkles, path: '/instructor/course-generator' },
     { name: 'Students', icon: Users, path: '/instructor/students' },
     { name: 'Reviews', icon: Star, path: '/instructor/reviews' },
     { name: 'Live Classes', icon: Video, path: '/instructor/live-classes' },

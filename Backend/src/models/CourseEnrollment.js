@@ -9,6 +9,16 @@ const CourseEnrollment = sequelize.define('CourseEnrollment', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'user_id'
+  },
+  courseId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'course_id'
+  },
   paymentStatus: {
     type: DataTypes.ENUM('pending', 'completed', 'failed'),
     defaultValue: 'pending',

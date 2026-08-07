@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { PlayCircle, Download, Infinity, Award, Image as ImageIcon } from 'lucide-react';
 
-export function Step3Pricing() {
-  const [isPaid, setIsPaid] = useState(true);
+export function Step3Pricing({ courseData = {}, updateCourseData = () => {} }) {
+  const [isPaid, setIsPaid] = useState(Number(courseData.price) > 0);
   const [hasLimit, setHasLimit] = useState(true);
+  const price = courseData.price || 99;
 
   return (
     <div className="flex-1 flex overflow-y-auto bg-[#f8f9fc] p-12 custom-scrollbar justify-center">
@@ -43,7 +44,8 @@ export function Step3Pricing() {
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">$</span>
                     <input 
                       type="text" 
-                      defaultValue="149"
+                      value={price}
+                      onChange={(e) => updateCourseData({ price: e.target.value })}
                       className="w-full border border-gray-300 rounded-xl pl-8 pr-4 py-3.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     />
                   </div>

@@ -23,16 +23,13 @@ export function TextInput({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Disable built-in marks if we are doing our own "parse on send"
-        // But keep them if we want rich text natively.
-        // We'll keep them standard.
         bold: false,
         italic: false,
         strike: false,
         codeBlock: false,
       }),
       Placeholder.configure({
-        placeholder: "Type a message",
+        placeholder: "Type a message...",
         emptyEditorClass: "is-editor-empty",
       }),
       Mention.configure({
@@ -45,7 +42,6 @@ export function TextInput({
     ],
     content: initialContent,
     onUpdate: ({ editor }) => {
-      // Throttle typing emits
       if (!emojiRef.current?.dataset.typingTimeout) {
         onTyping();
         emojiRef.current = emojiRef.current || document.createElement("div");
@@ -58,7 +54,7 @@ export function TextInput({
     editorProps: {
       attributes: {
         class:
-          "prose dark:prose-invert prose-sm m-0 focus:outline-none max-h-[120px] overflow-y-auto custom-scrollbar px-3 py-2.5",
+          "prose prose-sm m-0 focus:outline-none max-h-[120px] overflow-y-auto custom-scrollbar px-2 py-1.5 text-slate-900",
       },
       handleKeyDown: (view, event) => {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -93,8 +89,6 @@ export function TextInput({
     if (!editor || editor.isEmpty) return;
     const rawText = editor.getText();
     const parsedHtml = parseWhatsAppMarkdown(rawText);
-    // In a real app we might want to send the actual HTML or just the parsed text.
-    // Assuming parsedHtml for this implementation.
     onSend(parsedHtml);
     editor.commands.clearContent();
   };
@@ -108,27 +102,23 @@ export function TextInput({
   const hasContent = editor && !editor.isEmpty;
 
   return (
-    <div className="flex items-end gap-2 w-full relative">
-      {/* Left Actions */}
-      <div className="flex items-center gap-1 shrink-0 px-2">
-        <button
-          onClick={onOpenAttachments}
-          className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-        >
-          <Paperclip size={20} strokeWidth={2.5} />
-        </button>
-      </div>
+    <div className="flex items-center gap-1.5 w-full relative">
+      {/* Left Action: Attachment */}
+      <button
+        onClick={onOpenAttachments}
+        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-colors shrink-0"
+        title="Attach files or media"
+      >
+        <Paperclip size={18} />
+      </button>
 
       {/* Center Input (Tiptap) */}
       <div className="flex-1 bg-transparent transition-all overflow-hidden relative self-center">
-        {/* Tiptap styles needed for placeholder: 
-           .is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #9ca3af; pointer-events: none; height: 0; } 
-          */}
         <style>{`
           .is-editor-empty:first-child::before {
             content: attr(data-placeholder);
             float: left;
-            color: #9ca3af;
+            color: #94a3b8;
             pointer-events: none;
             height: 0;
           }
@@ -138,18 +128,19 @@ export function TextInput({
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2 shrink-0 pr-1 relative">
+      <div className="flex items-center gap-1 shrink-0 relative">
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-colors"
+          title="Insert emoji"
         >
-          <Smile size={20} strokeWidth={2.5} />
+          <Smile size={18} />
         </button>
 
         {showEmojiPicker && (
           <div
             ref={emojiRef}
-            className="absolute bottom-full right-0 mb-4 z-50 shadow-2xl rounded-2xl overflow-hidden border border-gray-100"
+            className="absolute bottom-full right-0 mb-3 z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-200"
           >
             <Picker
               data={data}
@@ -160,20 +151,23 @@ export function TextInput({
             />
           </div>
         )}
+
         {hasContent || isEditMode ? (
           <button
-            className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors"
+            className="p-2 bg-[#5840D8] text-white rounded-xl hover:bg-[#4830c0] shadow-xs active:scale-95 transition-all"
             onClick={handleSend}
+            title="Send message"
           >
-            {isEditMode ? <Check size={20} /> : <Send size={20} />}
+            {isEditMode ? <Check size={16} strokeWidth={2.5} /> : <Send size={16} strokeWidth={2.5} />}
           </button>
         ) : (
           <button
             onMouseDown={onStartVoice}
             onTouchStart={onStartVoice}
-            className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-colors cursor-pointer"
+            title="Hold to record voice message"
           >
-            <Mic size={20} />
+            <Mic size={18} />
           </button>
         )}
       </div>

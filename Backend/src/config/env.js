@@ -9,11 +9,17 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(8),
   JWT_REFRESH_SECRET: z.string().min(8),
   FRONTEND_URL: z.string().url(),
-  CLOUDINARY_CLOUD_NAME: z.string().min(1),
-  CLOUDINARY_API_KEY: z.string().min(1),
-  CLOUDINARY_API_SECRET: z.string().min(1),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
-});
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+}).passthrough();
+
 
 const parseEnv = () => {
   const result = envSchema.safeParse(process.env);

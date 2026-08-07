@@ -9,6 +9,9 @@ import { RagChainService } from '../../services/ai/chains/ragChain.js';
 import { SummarizerChainService } from '../../services/ai/chains/summarizerChain.js';
 import { MemoryService } from '../../services/ai/memory/memoryService.js';
 import { supabaseAdmin } from '../../config/supabaseClient.js';
+import fs from 'fs';
+import path from 'path';
+import AiDocument from '../../models/AiDocument.js';
 
 export class AiController {
   /**
@@ -20,45 +23,68 @@ export class AiController {
     }
 
     const { workspaceId, strategy, chunkSize, chunkOverlap } = req.body;
-    const userId = req.user?.id || req.body.userId || 'anonymous_user';
+    const userId = req.user?.id || req.body.userId;
 
-    // 1. Load document via format-specific loader
-    const loadedDocs = await loadDocument({
-      source: req.file.buffer,
-      fileName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      metadata: {
-        userId,
-        workspaceId: workspaceId || null,
-        fileSize: req.file.size,
-      },
-    });
-
-    // 2. Chunk document
-    const chunks = await SplitterService.splitDocuments(loadedDocs, {
-      strategy,
-      chunkSize: chunkSize ? parseInt(chunkSize, 10) : undefined,
-      chunkOverlap: chunkOverlap ? parseInt(chunkOverlap, 10) : undefined,
-    });
-
-    if (chunks.length === 0) {
-      throw ApiError.badRequest('Document resulted in 0 indexable text chunks.');
+    if (!userId) {
+      throw ApiError.unauthorized('User must be logged in to upload AI documents');
     }
 
-    // 3. Embed & store into Supabase pgvector
-    const vectorStore = getVectorStore();
-    await vectorStore.addDocuments(chunks, { userId, workspaceId });
+    // 1. Save metadata into PostgreSQL (AiDocuments table)
+    const fileUrl = `/uploads/ai-docs/${req.file.filename}`;
+    const aiDoc = await AiDocument.create({
+      userId,
+      filename: req.file.originalname,
+      fileType: req.file.mimetype,
+      fileSize: req.file.size,
+      fileUrl: fileUrl,
+      workspaceId: workspaceId || null
+    });
+
+    // 2. Load document via format-specific loader
+    let loadedDocs = [];
+    let chunks = [];
+    try {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      loadedDocs = await loadDocument({
+        source: fileBuffer,
+        fileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        metadata: {
+          userId,
+          workspaceId: workspaceId || null,
+          fileSize: req.file.size,
+          documentId: aiDoc.id
+        },
+      });
+
+      // 3. Chunk document
+      chunks = await SplitterService.splitDocuments(loadedDocs, {
+        strategy,
+        chunkSize: chunkSize ? parseInt(chunkSize, 10) : undefined,
+        chunkOverlap: chunkOverlap ? parseInt(chunkOverlap, 10) : undefined,
+      });
+
+      // 4. Embed & store into Supabase pgvector
+      if (chunks.length > 0) {
+        const vectorStore = getVectorStore();
+        await vectorStore.addDocuments(chunks, { userId, workspaceId });
+      }
+    } catch (ingestError) {
+      console.warn(`[DocumentIngest] Background text extraction/embedding warning for ${req.file.originalname}:`, ingestError.message);
+    }
 
     res.status(201).json(
       ApiResponse.created(
         {
-          fileName: req.file.originalname,
-          fileType: loadedDocs[0]?.metadata?.fileType,
+          id: aiDoc.id,
+          fileName: aiDoc.filename,
+          fileType: aiDoc.fileType,
+          fileUrl: aiDoc.fileUrl,
           totalChunks: chunks.length,
           totalChars: loadedDocs.reduce((acc, doc) => acc + (doc.pageContent?.length || 0), 0),
           userId,
         },
-        'Document successfully parsed, chunked, embedded, and indexed.'
+        'Document successfully uploaded and saved.'
       )
     );
   });
@@ -224,61 +250,112 @@ export class AiController {
   });
 
   /**
+   * Pre-defined prompt actions for documents (e.g. flashcards, mcqs, summary, explain)
+   */
+  static documentAction = asyncHandler(async (req, res) => {
+    const { documentId, action } = req.body;
+    const userId = req.user?.id;
+
+    if (!documentId || !action) {
+      throw ApiError.badRequest('documentId and action are required.');
+    }
+
+    const actionPrompts = {
+      summarize: 'Please provide a comprehensive summary of this document.',
+      explain_beginner: 'Explain the core concepts of this document as if I am a beginner or a 10 year old.',
+      explain_expert: 'Explain the core concepts of this document at an expert level.',
+      key_points: 'Extract the top 10 most important key points from this document.',
+      flashcards: 'Generate 10 flashcards (Question and Answer format) from this document to help me study.',
+      mcq: 'Generate 5 multiple-choice questions based on this document. Include the correct answer and a brief explanation for each.',
+      interview: 'Generate 5 realistic interview questions based on the concepts in this document.',
+    };
+
+    const question = actionPrompts[action] || actionPrompts.summarize;
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    try {
+      const stream = RagChainService.stream({
+        question,
+        filter: { 
+          documentId, 
+          fileUrl: req.body.fileUrl, 
+          fileName: req.body.fileName, 
+          userId 
+        }
+      });
+
+      for await (const chunk of stream) {
+        if (chunk.type === 'token') {
+          res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.data })}\n\n`);
+        } else if (chunk.type === 'citations') {
+          res.write(`data: ${JSON.stringify({ type: 'citations', citations: chunk.data })}\n\n`);
+        } else if (chunk.type === 'done') {
+          res.write(`data: [DONE]\n\n`);
+        }
+      }
+      res.end();
+    } catch (error) {
+      res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+      res.end();
+    }
+  });
+
+  /**
    * List indexed documents for user
    */
   static listUserDocuments = asyncHandler(async (req, res) => {
     const userId = req.user?.id;
 
-    if (!userId || !supabaseAdmin) {
+    if (!userId) {
       return res.json(ApiResponse.ok({ documents: [] }));
     }
 
     try {
-      const { data, error } = await supabaseAdmin
-        .from('documents')
-        .select('metadata, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error || !data) {
-        return res.json(ApiResponse.ok({ documents: [] }));
-      }
-
-      // Group distinct documents by fileName
-      const docMap = new Map();
-      data.forEach((row) => {
-        const meta = row.metadata || {};
-        const fileName = meta.fileName || 'Untitled Document';
-        if (!docMap.has(fileName)) {
-          docMap.set(fileName, {
-            fileName,
-            fileType: meta.fileType || 'unknown',
-            totalChunks: meta.totalChunks || 1,
-            indexedAt: meta.indexedAt || row.created_at,
-          });
-        }
+      const documents = await AiDocument.findAll({
+        where: { userId },
+        order: [['created_at', 'DESC']]
       });
 
-      res.json(ApiResponse.ok({ documents: Array.from(docMap.values()) }));
+      res.json(ApiResponse.ok({ documents }));
     } catch (error) {
       res.json(ApiResponse.ok({ documents: [] }));
     }
   });
 
   /**
-   * Delete indexed document by fileName
+   * Delete indexed document by documentId
    */
   static deleteDocument = asyncHandler(async (req, res) => {
-    const { fileName } = req.params;
+    const { documentId } = req.params;
     const userId = req.user?.id;
 
-    if (!fileName) {
-      throw ApiError.badRequest('fileName parameter is required.');
+    if (!documentId) {
+      throw ApiError.badRequest('documentId parameter is required.');
     }
 
-    const vectorStore = getVectorStore();
-    await vectorStore.deleteDocuments({ fileName, userId });
+    const aiDoc = await AiDocument.findOne({ where: { id: documentId, userId } });
+    if (!aiDoc) {
+      throw ApiError.notFound('Document not found');
+    }
 
-    res.json(ApiResponse.ok(null, `Document "${fileName}" deleted from AI knowledge base.`));
+    // 1. Delete physical file if it exists locally
+    if (aiDoc.fileUrl) {
+      const localPath = path.join(process.cwd(), aiDoc.fileUrl);
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
+    }
+
+    // 2. Delete from AiDocuments table
+    await aiDoc.destroy();
+
+    // 3. Delete from vector store
+    const vectorStore = getVectorStore();
+    await vectorStore.deleteDocuments({ documentId, userId });
+
+    res.json(ApiResponse.ok(null, `Document "${aiDoc.filename}" deleted successfully.`));
   });
 }

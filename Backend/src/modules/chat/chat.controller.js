@@ -27,7 +27,7 @@ export const getConversations = asyncHandler(async (req, res) => {
     // 1. Get conversations
     const convQuery = `
       SELECT 
-        c.id, c.type, c.name, c.avatar_url, c.last_message_id, c.last_activity_at,
+        c.id, c.type, c.name, c.description, c.avatar_url, c.created_by, c.last_message_id, c.last_activity_at,
         (
           SELECT json_build_object(
             'id', m.id, 'content', m.content, 'type', m.type, 'sender_id', m.sender_id, 'created_at', m.created_at
@@ -37,15 +37,17 @@ export const getConversations = asyncHandler(async (req, res) => {
         (
           SELECT json_agg(json_build_object(
             'user_id', cm2.user_id,
+            'role', cm2.role,
             'is_muted', cm2.is_muted,
             'is_pinned', cm2.is_pinned,
             'is_archived', cm2.is_archived,
             'unread_count', cm2.unread_count,
+            'joined_at', cm2.joined_at,
             'profile', (SELECT json_build_object(
               'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
-              'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-              'initials', p.initials, 'status', p.status
-            ) FROM public.profiles p WHERE p.id = cm2.user_id)
+              'avatar_color_bg', '#3B82F6', 'avatar_color_text', '#FFFFFF',
+              'initials', substring(p.full_name from 1 for 1), 'status', CASE WHEN p.is_online THEN 'online' ELSE 'offline' END
+            ) FROM public."Users" p WHERE p.id = cm2.user_id)
           ))
           FROM public.conversation_members cm2 
           WHERE cm2.conversation_id = c.id
@@ -58,23 +60,28 @@ export const getConversations = asyncHandler(async (req, res) => {
     
     const { rows: conversations } = await client.query(convQuery, [req.user.id]);
 
-    // 2. Get all contacts (for start new chat flow)
+    // 2. Only get connected contacts (users already in DMs with current user)
     const contactsQuery = `
-      SELECT 
-        id, full_name, avatar_url, avatar_color_bg, avatar_color_text, initials, status
-      FROM public.profiles
-      WHERE id != $1
+      SELECT DISTINCT
+        p.id, p.full_name, p.avatar_url, '#3B82F6' as avatar_color_bg, '#FFFFFF' as avatar_color_text, substring(p.full_name from 1 for 1) as initials, CASE WHEN p.is_online THEN 'online' ELSE 'offline' END as status
+      FROM public.conversations c
+      JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id AND cm1.user_id = $1
+      JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id != $1
+      JOIN public."Users" p ON p.id = cm2.user_id
+      WHERE c.type = 'dm'
     `;
     const { rows: contacts } = await client.query(contactsQuery, [req.user.id]);
 
     // Format conversations to match what frontend expects
     const formattedConversations = conversations.map(c => {
-      const myMembership = c.members.find(m => m.user_id === req.user.id);
+      const myMembership = c.members ? c.members.find(m => m.user_id === req.user.id) : null;
       
       const formatted = {
         id: c.id,
         type: c.type,
         displayName: c.name,
+        description: c.description || (c.type === 'group' ? `Official community group for "${c.name}".` : ''),
+        createdBy: c.created_by,
         avatarUrl: c.avatar_url,
         last_message: c.last_message?.content || null,
         last_message_at: c.last_message?.created_at || null,
@@ -82,7 +89,9 @@ export const getConversations = asyncHandler(async (req, res) => {
         isMuted: myMembership?.is_muted || false,
         isPinned: myMembership?.is_pinned || false,
         isArchived: myMembership?.is_archived || false,
-        members: c.members
+        role: myMembership?.role || 'member',
+        isAdmin: myMembership?.role === 'admin' || c.created_by === req.user.id,
+        members: c.members || []
       };
 
       if (c.type === 'dm') {
@@ -107,14 +116,123 @@ export const getConversations = asyncHandler(async (req, res) => {
     res.json(responseData);
 
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch (_) {}
+  }
+});
+
+// GET /api/v1/chat/users/search?q=
+export const searchUsers = asyncHandler(async (req, res) => {
+  const currentUserId = req.user.id;
+  const rawQ = (req.query.q || '').trim();
+  const q = rawQ.replace(/^@/, ''); // Remove leading @ if present
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+
+    let query;
+    let params;
+
+    if (q) {
+      query = `
+        SELECT 
+          u.id AS id,
+          COALESCE(u.full_name, 'Nexera User') AS full_name,
+          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
+          COALESCE(u.email, '') AS email,
+          u.avatar_url AS avatar_url,
+          '#6366f1' AS avatar_color_bg,
+          '#ffffff' AS avatar_color_text,
+          UPPER(SUBSTRING(COALESCE(u.full_name, 'U') FROM 1 FOR 2)) AS initials,
+          CASE WHEN u.is_online THEN 'online' ELSE 'offline' END AS status,
+          (
+            SELECT c.id FROM public.conversations c
+            JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id
+            JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id
+            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = u.id
+            LIMIT 1
+          ) AS conversation_id
+        FROM public."Users" u
+        WHERE u.id != $1
+          AND (
+            u.username ILIKE $2
+            OR u.full_name ILIKE $2
+            OR u.email ILIKE $2
+          )
+        ORDER BY 
+          CASE WHEN u.username ILIKE $3 THEN 0 ELSE 1 END,
+          u.full_name ASC
+        LIMIT 20
+      `;
+      params = [currentUserId, `%${q}%`, `${q}%`];
+    } else {
+      query = `
+        SELECT 
+          u.id AS id,
+          COALESCE(u.full_name, 'Nexera User') AS full_name,
+          COALESCE(u.username, LOWER(REGEXP_REPLACE(COALESCE(u.full_name, 'user'), '[^a-zA-Z0-9]', '', 'g'))) AS username,
+          COALESCE(u.email, '') AS email,
+          u.avatar_url AS avatar_url,
+          '#6366f1' AS avatar_color_bg,
+          '#ffffff' AS avatar_color_text,
+          UPPER(SUBSTRING(COALESCE(u.full_name, 'U') FROM 1 FOR 2)) AS initials,
+          CASE WHEN u.is_online THEN 'online' ELSE 'offline' END AS status,
+          (
+            SELECT c.id FROM public.conversations c
+            JOIN public.conversation_members cm1 ON cm1.conversation_id = c.id
+            JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id
+            WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = u.id
+            LIMIT 1
+          ) AS conversation_id
+        FROM public."Users" u
+        WHERE u.id != $1
+        ORDER BY u.full_name ASC
+        LIMIT 15
+      `;
+      params = [currentUserId];
+    }
+
+    const { rows } = await client.query(query, params);
+
+    // Remove any duplicate IDs if full outer join produced duplicate rows
+    const seen = new Set();
+    const users = [];
+    for (const r of rows) {
+      if (!r.id || seen.has(r.id)) continue;
+      seen.add(r.id);
+      users.push({
+        id: r.id,
+        fullName: r.full_name,
+        username: r.username,
+        email: r.email,
+        avatarUrl: r.avatar_url,
+        avatarColorBg: r.avatar_color_bg,
+        avatarColorText: r.avatar_color_text,
+        initials: r.initials,
+        status: r.status,
+        isConnected: !!r.conversation_id,
+        conversationId: r.conversation_id || null
+      });
+    }
+
+    res.json({ users });
+  } finally {
+    try {
+      await client.end();
+    } catch (_) {}
   }
 });
 
 const fetchAndFormatConversation = async (client, conversationId, currentUserId) => {
   const query = `
     SELECT 
-      c.id, c.type, c.name, c.avatar_url, c.last_message_id, c.last_activity_at,
+      c.id, c.type, c.name, c.description, c.avatar_url, c.created_by, c.last_message_id, c.last_activity_at,
       (
         SELECT json_build_object(
           'id', m.id, 'content', m.content, 'type', m.type, 'sender_id', m.sender_id, 'created_at', m.created_at
@@ -124,15 +242,17 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
       (
         SELECT json_agg(json_build_object(
           'user_id', cm2.user_id,
+          'role', cm2.role,
           'is_muted', cm2.is_muted,
           'is_pinned', cm2.is_pinned,
           'is_archived', cm2.is_archived,
           'unread_count', cm2.unread_count,
-          'profile', (SELECT json_build_object(
-            'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
-            'avatar_color_bg', p.avatar_color_bg, 'avatar_color_text', p.avatar_color_text,
-            'initials', p.initials, 'status', p.status
-          ) FROM public.profiles p WHERE p.id = cm2.user_id)
+          'joined_at', cm2.joined_at,
+            'profile', (SELECT json_build_object(
+              'id', p.id, 'full_name', p.full_name, 'avatar_url', p.avatar_url, 
+              'avatar_color_bg', '#3B82F6', 'avatar_color_text', '#FFFFFF',
+              'initials', substring(p.full_name from 1 for 1), 'status', CASE WHEN p.is_online THEN 'online' ELSE 'offline' END
+            ) FROM public."Users" p WHERE p.id = cm2.user_id)
         ))
         FROM public.conversation_members cm2 
         WHERE cm2.conversation_id = c.id
@@ -143,11 +263,13 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
   const { rows } = await client.query(query, [conversationId]);
   if (rows.length === 0) return null;
   const c = rows[0];
-  const myMembership = c.members.find(m => m.user_id === currentUserId);
+  const myMembership = c.members ? c.members.find(m => m.user_id === currentUserId) : null;
   const formatted = {
     id: c.id,
     type: c.type,
     displayName: c.name,
+    description: c.description || (c.type === 'group' ? `Official community group for "${c.name}".` : ''),
+    createdBy: c.created_by,
     avatarUrl: c.avatar_url,
     last_message: c.last_message?.content || null,
     last_message_at: c.last_message?.created_at || null,
@@ -155,7 +277,9 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
     isMuted: myMembership?.is_muted || false,
     isPinned: myMembership?.is_pinned || false,
     isArchived: myMembership?.is_archived || false,
-    members: c.members
+    role: myMembership?.role || 'member',
+    isAdmin: myMembership?.role === 'admin' || c.created_by === currentUserId,
+    members: c.members || []
   };
 
   if (c.type === 'dm') {
@@ -175,9 +299,9 @@ const fetchAndFormatConversation = async (client, conversationId, currentUserId)
 
 // POST /api/conversations/dm
 export const createDM = asyncHandler(async (req, res) => {
-  const { otherUserId } = req.body;
-  if (!otherUserId) {
-    res.status(400).json({ error: 'otherUserId is required' });
+  const { otherUserId, username } = req.body;
+  if (!otherUserId && !username) {
+    res.status(400).json({ error: 'otherUserId or username is required' });
     return;
   }
   const currentUserId = req.user.id;
@@ -189,6 +313,36 @@ export const createDM = asyncHandler(async (req, res) => {
   try {
     await client.connect();
 
+    let targetUserId = otherUserId;
+    if (!targetUserId && username) {
+      const cleanUsername = username.trim().replace(/^@/, '');
+      const userRes = await client.query(
+        `SELECT id FROM "Users" WHERE username ILIKE $1 LIMIT 1`,
+        [cleanUsername]
+      );
+      if (userRes.rows.length > 0) {
+        targetUserId = userRes.rows[0].id;
+      } else {
+        const profRes = await client.query(
+          `SELECT id FROM public."Users" WHERE full_name ILIKE $1 LIMIT 1`,
+          [cleanUsername]
+        );
+        if (profRes.rows.length > 0) {
+          targetUserId = profRes.rows[0].id;
+        }
+      }
+    }
+
+    if (!targetUserId) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (targetUserId === currentUserId) {
+      res.status(400).json({ error: 'Cannot start a direct message with yourself' });
+      return;
+    }
+
     // Check if DM already exists
     const checkQuery = `
       SELECT c.id FROM public.conversations c
@@ -196,7 +350,7 @@ export const createDM = asyncHandler(async (req, res) => {
       JOIN public.conversation_members cm2 ON cm2.conversation_id = c.id
       WHERE c.type = 'dm' AND cm1.user_id = $1 AND cm2.user_id = $2
     `;
-    const checkRes = await client.query(checkQuery, [currentUserId, otherUserId]);
+    const checkRes = await client.query(checkQuery, [currentUserId, targetUserId]);
 
     if (checkRes.rows.length > 0) {
       const convo = await fetchAndFormatConversation(client, checkRes.rows[0].id, currentUserId);
@@ -217,16 +371,18 @@ export const createDM = asyncHandler(async (req, res) => {
       INSERT INTO public.conversation_members (conversation_id, user_id)
       VALUES ($1, $2), ($1, $3)
     `;
-    await client.query(insertMember, [conversationId, currentUserId, otherUserId]);
+    await client.query(insertMember, [conversationId, currentUserId, targetUserId]);
 
     const convo = await fetchAndFormatConversation(client, conversationId, currentUserId);
     
     await deleteCache(`conversations:${currentUserId}`);
-    await deleteCache(`conversations:${otherUserId}`);
+    await deleteCache(`conversations:${targetUserId}`);
 
     res.status(201).json({ conversation: convo });
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch (_) {}
   }
 });
 

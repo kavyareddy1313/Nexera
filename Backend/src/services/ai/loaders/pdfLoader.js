@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import { BaseLoader } from './baseLoader.js';
 
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfModule = require('pdf-parse');
 
 /**
  * PdfLoader
@@ -25,16 +25,46 @@ export class PdfLoader extends BaseLoader {
       dataBuffer = await fs.readFile(source);
     } else if (Buffer.isBuffer(source)) {
       dataBuffer = source;
+    } else if (source instanceof Uint8Array) {
+      dataBuffer = Buffer.from(source);
     } else {
       throw new Error('Invalid source for PdfLoader: Expected file path or Buffer.');
     }
 
     try {
-      const data = await pdfParse(dataBuffer, {
-        version: 'default',
-      });
+      let extractedText = '';
+      let totalPages = 1;
+      let pdfInfo = {};
 
-      if (!data.text || data.text.trim().length === 0) {
+      if (typeof pdfModule === 'function') {
+        const data = await pdfModule(dataBuffer);
+        extractedText = data.text;
+        totalPages = data.numpages || 1;
+        pdfInfo = {
+          title: data.info?.Title || null,
+          author: data.info?.Author || null,
+          creator: data.info?.Creator || null,
+        };
+      } else if (pdfModule.PDFParse) {
+        const parser = new pdfModule.PDFParse({ data: dataBuffer });
+        const textResult = await parser.getText();
+        extractedText = textResult?.text || '';
+        try {
+          const infoResult = await parser.getInfo();
+          totalPages = infoResult?.total || 1;
+          pdfInfo = {
+            title: infoResult?.info?.Title || null,
+            author: infoResult?.info?.Author || null,
+            creator: infoResult?.info?.Creator || null,
+          };
+        } catch (_) {}
+      } else if (typeof pdfModule.default === 'function') {
+        const data = await pdfModule.default(dataBuffer);
+        extractedText = data.text;
+        totalPages = data.numpages || 1;
+      }
+
+      if (!extractedText || extractedText.trim().length === 0) {
         throw new Error('PDF file appears to be empty or contains scanned images without text layer.');
       }
 
@@ -42,15 +72,11 @@ export class PdfLoader extends BaseLoader {
         ...metadata,
         source: filePath || metadata.fileName || 'pdf-document',
         fileType: 'pdf',
-        totalPages: data.numpages || 1,
-        pdfInfo: {
-          title: data.info?.Title || null,
-          author: data.info?.Author || null,
-          creator: data.info?.Creator || null,
-        },
+        totalPages,
+        pdfInfo,
       };
 
-      return [this.createDocument(data.text, docMetadata)];
+      return [this.createDocument(extractedText, docMetadata)];
     } catch (error) {
       throw new Error(`Failed to parse PDF document: ${error.message}`);
     }
