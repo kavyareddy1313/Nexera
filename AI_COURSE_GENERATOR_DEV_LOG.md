@@ -26,3 +26,4 @@
 - [x] Development step 24 completed.
 - [x] Development step 25 completed.
 - [x] Development step 26 completed.
+- [x] Development step 27 completed.
