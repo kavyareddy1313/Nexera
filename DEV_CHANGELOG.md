@@ -36,3 +36,7 @@
 - refactor(ai-llm): streamline structured output parser with Zod schema validation
 - *Status: Verified & Integrated*
 
+### Milestone 10
+- feat(ai-prompts): design comprehensive prompt templates for document summarization
+- *Status: Verified & Integrated*
+
