@@ -30,6 +30,10 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import AiFloatingButton from './components/ai/AiFloatingButton';
 
+import AiDocumentsPage from './pages/AiDocumentsPage';
+import AiWorkspaceViewer from './pages/AiWorkspaceViewer';
+import CourseGeneratorWizard from './pages/CourseGeneratorWizard';
+
 const DashboardRouter = () => {
   const { user } = useAuth();
   
@@ -82,6 +86,7 @@ function App() {
             <Route path="messages" element={<InstructorMessagesPage />} />
             <Route path="courses" element={<InstructorCoursesPage />} />
             <Route path="courses/create" element={<CreateCoursePage />} />
+            <Route path="course-generator" element={<CourseGeneratorWizard />} />
             <Route path="courses/:id/manage" element={<CourseContentManager />} />
             <Route path="students" element={<InstructorStudentsPage />} />
             <Route path="reviews" element={<InstructorReviewsPage />} />
@@ -127,6 +132,25 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* AI Module 1 Routes */}
+          <Route
+            path="/ai/documents"
+            element={
+              <ProtectedRoute>
+                <AiDocumentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai/workspace/:id"
+            element={
+              <ProtectedRoute>
+                <AiWorkspaceViewer />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         <AiFloatingButton />
