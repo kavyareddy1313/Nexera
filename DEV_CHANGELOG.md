@@ -24,3 +24,7 @@
 - refactor(ai-retriever): normalize similarity score calculations across vector backends
 - *Status: Verified & Integrated*
 
+### Milestone 7
+- feat(ai-llm): introduce LlmFactory provider registry and dynamic model dispatching
+- *Status: Verified & Integrated*
+
