@@ -228,3 +228,7 @@
 - feat(analytics): add token usage and AI query latency instrumentation
 - *Status: Verified & Integrated*
 
+### Milestone 58
+- feat(workspace): add multi-document context aggregation for cross-document Q&A
+- *Status: Verified & Integrated*
+
