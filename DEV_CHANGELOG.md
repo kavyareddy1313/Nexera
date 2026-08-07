@@ -144,3 +144,7 @@
 - feat(frontend-ui): create PDF viewer toolbar with zoom, download, and fullscreen toggles
 - *Status: Verified & Integrated*
 
+### Milestone 37
+- feat(frontend-ui): integrate Markdown renderer with syntax highlighting for code blocks
+- *Status: Verified & Integrated*
+
