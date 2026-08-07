@@ -11,3 +11,4 @@
 - [x] Development step 9 completed.
 - [x] Development step 10 completed.
 - [x] Development step 11 completed.
+- [x] Development step 12 completed.
