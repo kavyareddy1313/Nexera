@@ -16,3 +16,7 @@
 - feat(ai-retriever): add Reciprocal Rank Fusion (RRF) for hybrid document search
 - *Status: Verified & Integrated*
 
+### Milestone 5
+- feat(ai-retriever): implement sparse BM25 keyword matching pipeline
+- *Status: Verified & Integrated*
+
