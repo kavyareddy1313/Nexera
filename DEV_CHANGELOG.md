@@ -196,3 +196,7 @@
 - perf(frontend): memoize PDF page rendering to prevent redundant canvas repaints
 - *Status: Verified & Integrated*
 
+### Milestone 50
+- docs(architecture): document AI multi-provider fallback and recovery mechanisms
+- *Status: Verified & Integrated*
+
