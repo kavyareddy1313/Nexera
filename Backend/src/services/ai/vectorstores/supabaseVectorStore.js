@@ -53,7 +53,8 @@ export class SupabasePgVectorStore extends BaseVectorStoreService {
     try {
       return await this.vectorStore.addDocuments(preparedDocs);
     } catch (error) {
-      throw new Error(`Failed to insert vectors into Supabase: ${error.message}`);
+      console.warn(`[VectorStore] Supabase vector insert skipped/failed: ${error.message}`);
+      return [];
     }
   }
 
