@@ -15,7 +15,7 @@ export class LlmFactory {
   /**
    * Provider initialization order for fallback
    */
-  static FALLBACK_ORDER = ['gemini', 'groq', 'openai'];
+  static FALLBACK_ORDER = ['groq', 'gemini', 'openai'];
 
   /**
    * Create a Chat model for a specific provider
@@ -84,7 +84,7 @@ export class LlmFactory {
    * @returns {ChatOpenAI|ChatGoogleGenerativeAI}
    */
   static getModel(options = {}) {
-    const provider = (options.provider || aiConfig.llm.provider || 'gemini').toLowerCase();
+    const provider = (options.provider || process.env.AI_LLM_PROVIDER || aiConfig.llm.provider || 'groq').toLowerCase();
     const streaming = options.streaming !== false;
     const temperature = options.temperature ?? aiConfig.llm[provider]?.temperature ?? 0.2;
     const cacheKey = `${provider}_${options.modelName || 'default'}_${temperature}_${streaming}`;
@@ -127,41 +127,54 @@ export class LlmFactory {
    * @returns {Promise<any>} - Chain result
    */
   static async invokeWithFallback(chainFactory, input, options = {}) {
-    const primary = (options.primaryProvider || aiConfig.llm.provider || 'gemini').toLowerCase();
+    const primary = (options.primaryProvider || process.env.AI_LLM_PROVIDER || aiConfig.llm.provider || 'groq').toLowerCase();
 
     // Build ordered provider list: primary first, then rest
     const providers = [primary, ...this.FALLBACK_ORDER.filter(p => p !== primary)];
 
     for (let i = 0; i < providers.length; i++) {
       const provider = providers[i];
-      try {
-        const llm = options.structured
-          ? this._createModel(provider, { streaming: false, temperature: 0.3, maxTokens: 4096 })
-          : this._createModel(provider, { streaming: false, temperature: options.temperature ?? 0.5 });
+      let retries = provider === 'groq' ? 3 : 1; // give groq extra retries for rate limits
+      while (retries > 0) {
+        try {
+          const llm = options.structured
+            ? this._createModel(provider, { streaming: false, temperature: 0.3, maxTokens: 1500 })
+            : this._createModel(provider, { streaming: false, temperature: options.temperature ?? 0.5 });
 
-        const chain = chainFactory(llm);
-        const startTime = Date.now();
-        const result = await chain.invoke(input);
-        const durationMs = Date.now() - startTime;
+          const chain = chainFactory(llm);
+          const startTime = Date.now();
+          const result = await chain.invoke(input);
+          const durationMs = Date.now() - startTime;
 
-        // Log token usage
-        console.log(JSON.stringify({
-          type: 'llm_call',
-          provider,
-          model: llm.modelName || llm.model || 'unknown',
-          durationMs,
-          jobId: options.jobId || null,
-          stage: options.stage || null,
-          fallbackAttempt: i,
-        }));
+          // Log token usage
+          console.log(JSON.stringify({
+            type: 'llm_call',
+            provider,
+            model: llm.modelName || llm.model || 'unknown',
+            durationMs,
+            jobId: options.jobId || null,
+            stage: options.stage || null,
+            fallbackAttempt: i,
+          }));
 
-        return result;
-      } catch (err) {
-        console.warn(`[LlmFactory] Provider "${provider}" failed: ${err.message}`);
-        if (i === providers.length - 1) {
-          throw new Error(`All LLM providers failed. Last error (${provider}): ${err.message}`);
+          return result;
+        } catch (err) {
+          const is429 = err.message && (err.message.includes('429') || err.message.includes('Rate limit'));
+          retries--;
+          if (is429 && retries > 0) {
+            // Extract retry delay from error message e.g. "Please try again in 38.21s"
+            const match = err.message.match(/try again in ([\d.]+)s/);
+            const waitMs = match ? Math.ceil(parseFloat(match[1])) * 1000 : 15000;
+            console.warn(`[LlmFactory] Provider "${provider}" rate limited. Waiting ${waitMs}ms before retry...`);
+            await new Promise(r => setTimeout(r, waitMs));
+          } else {
+            console.warn(`[LlmFactory] Provider "${provider}" failed: ${err.message}`);
+            break; // move to next provider
+          }
         }
-        // Continue to next provider
+      }
+      if (i === providers.length - 1) {
+        throw new Error(`All LLM providers failed. Last error (${provider}): OPENAI_API_KEY is required.`);
       }
     }
   }

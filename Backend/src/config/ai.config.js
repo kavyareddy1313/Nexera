@@ -15,9 +15,9 @@ export const aiConfig = {
       maxTokens: 2048,
     },
     groq: {
-      model: process.env.GROQ_CHAT_MODEL || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      model: process.env.GROQ_CHAT_MODEL || process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
       temperature: 0.2,
-      maxTokens: 2048,
+      maxTokens: 1024,
     },
   },
   // Structured output retries (JSON parsing + Zod validation)

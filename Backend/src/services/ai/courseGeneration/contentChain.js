@@ -75,7 +75,7 @@ RULES:
 - Content should be appropriate for {difficulty} level
 - Include practical examples and code snippets where relevant
 - Use proper Markdown formatting with headers (##, ###), lists, bold, code blocks
-- Content should be 600-1200 words
+- Content should be 100-150 words (short and focused)
 - Return ONLY JSON, no markdown fences or extra text`
       : `You are an expert educator creating detailed lesson content for an online course.
 You MUST return ONLY a valid JSON object with this structure:
@@ -89,7 +89,7 @@ RULES:
 - Content should be appropriate for {difficulty} level
 - Include practical examples and code snippets where relevant
 - Use proper Markdown formatting with headers (##, ###), lists, bold, code blocks
-- Content should be 600-1200 words
+- Content should be 100-150 words (short and focused)
 - If you're uncertain about a factual claim, mark it with [Needs Review]
 - Return ONLY JSON, no markdown fences or extra text`;
 

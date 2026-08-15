@@ -197,6 +197,8 @@ export async function runPipeline(jobId, inputParams, instructorId) {
         );
 
         lessonsData[lessonKey] = content;
+        // Small delay between lessons to avoid hitting Groq free-tier rate limits
+        await sleep(3000);
         await saveProgress(); // Save intermediate state immediately
         
         lessonsDone++;
